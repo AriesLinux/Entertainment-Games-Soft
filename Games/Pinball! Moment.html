@@ -7,12 +7,12 @@
     <style>
         :root {
             --primary: #4CAF50;
-            --bg: #1a1a1a;
-            --card: #2d2d2d;
-            --text: #e0e0e0;
+            --bg: #0f0f0f;
+            --card: #1e1e1e;
+            --text: #ffffff;
         }
 
-        /* --- 啟動頁面樣式 --- */
+        /* --- Splash Screen --- */
         #splash-screen {
             position: fixed;
             top: 0; left: 0;
@@ -23,34 +23,38 @@
             justify-content: center;
             align-items: center;
             z-index: 10000;
-            transition: opacity 0.8s ease, visibility 0.8s;
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s, transform 1s;
         }
 
         #splash-screen img {
-            width: 300px; /* Logo 大小 */
+            width: 450px; /* 根據你的圖片比例優化 */
             height: auto;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.3));
+            margin-bottom: 30px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { filter: drop-shadow(0 0 5px rgba(255,255,255,0.1)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.4)); transform: scale(1.02); }
+            100% { filter: drop-shadow(0 0 5px rgba(255,255,255,0.1)); transform: scale(1); }
         }
 
         .loading-bar {
-            width: 200px;
-            height: 4px;
+            width: 250px; height: 2px;
             background: #333;
-            border-radius: 2px;
+            border-radius: 1px;
             overflow: hidden;
         }
 
         .loading-progress {
-            width: 0%;
-            height: 100%;
+            width: 0%; height: 100%;
             background: var(--primary);
-            transition: width 1.5s ease-in-out;
+            transition: width 2s cubic-bezier(0.65, 0, 0.35, 1);
         }
 
-        /* --- 遊戲原有樣式 --- */
+        /* --- Main Game Styles --- */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
@@ -61,78 +65,76 @@
 
         .container {
             background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            display: flex;
-            gap: 20px;
-            max-width: 900px;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            display: flex; gap: 25px;
+            border: 1px solid #333;
         }
 
-        .controls { display: flex; flex-direction: column; gap: 15px; min-width: 250px; }
-        h2 { margin: 0; color: var(--primary); font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        .controls { display: flex; flex-direction: column; gap: 20px; min-width: 280px; }
+        h2 { margin: 0; color: var(--primary); font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
         
         .stat-box {
-            background: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 6px;
-            border-left: 4px solid var(--primary);
+            background: #111;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
         }
 
         input, button {
-            background: #3d3d3d;
-            border: 1px solid #555;
+            background: #2a2a2a;
+            border: 1px solid #444;
             color: white;
-            padding: 10px;
-            border-radius: 4px;
+            padding: 12px;
+            border-radius: 6px;
             font-size: 1rem;
         }
 
         button {
             background: var(--primary);
+            color: #000;
             border: none;
             cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.1s, opacity 0.2s;
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: all 0.2s;
         }
 
-        button:active { transform: scale(0.95); }
-        button:hover { opacity: 0.8; }
+        button:hover { background: #66bb6a; transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
 
         canvas {
-            background: #111;
-            border-radius: 8px;
-            border: 2px solid #333;
+            background: #000;
+            border-radius: 12px;
+            border: 1px solid #444;
         }
 
         .log {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.8rem;
-            height: 150px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.85rem;
+            height: 180px;
             overflow-y: auto;
-            background: #000;
-            padding: 10px;
-            border-radius: 4px;
-            color: #0f0;
-            border: 1px solid #333;
+            background: #050505;
+            padding: 12px;
+            border-radius: 6px;
+            color: #4CAF50;
+            border: 1px solid #222;
         }
-
-        .header { text-align: center; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
-        <img src="https://github.com/user-attachments/assets/7c433560-5b9c-4b27-b533-46ab583b1575" alt="EGS Logo">
+        <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="EGS Logo">
         <div class="loading-bar">
             <div class="loading-progress" id="load-progress"></div>
         </div>
-        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">Initializing Jumping Fun Engine...</p>
     </div>
 
-    <div class="header">
-        <h2>Jumping Fun</h2>
-        <small style="color: #888;">Powered by Entertainment Games Soft Research</small>
+    <div class="header" style="text-align: center; margin-bottom: 30px;">
+        <h2>JUMPING FUN</h2>
+        <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">ENTERTAINMENT GAMES SOFT • RESEARCH DIV</div>
     </div>
 
     <div class="container">
@@ -140,24 +142,23 @@
 
         <div class="controls">
             <div class="stat-box">
-                <div style="font-size: 0.8rem; color: #888;">Available Balance</div>
-                <div id="balanceDisplay" style="font-size: 1.5rem; font-weight: bold;">$0.00</div>
+                <div style="font-size: 0.75rem; color: #888; text-transform: uppercase; margin-bottom: 5px;">Total Balance</div>
+                <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--primary);">$0.00</div>
             </div>
 
-            <label>Wager Amount ($):</label>
-            <input type="number" id="betInput" value="10" min="1">
-
-            <button id="dropButton">RELEASE BALL</button>
-
-            <div class="stat-box">
-                <small>Probability Monitor:</small>
-                <div id="statsDisplay">Total Drops: 0</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 0.85rem; color: #888;">WAGER PER DROP</label>
+                <input type="number" id="betInput" value="10" min="1">
             </div>
+
+            <button id="dropButton" style="height: 60px; font-size: 1.2rem;">Release Ball</button>
 
             <div class="log" id="gameLog">
-                [SYSTEM]: Research Environment Loaded.<br>
-                [SYSTEM]: Waiting for session start.
+                [SYSTEM]: EGS Engine Initialized.<br>
+                [SYSTEM]: Waiting for session...
             </div>
+            
+            <div id="statsDisplay" style="font-size: 0.8rem; color: #555; text-align: center;">RESEARCH DATA COLLECTED: 0</div>
         </div>
     </div>
 
@@ -178,28 +179,25 @@
     let balls = [];
     const multipliers = [5, 2, 1.2, 0.5, 0.2, 0.5, 1.2, 2, 5];
 
-    // --- 啟動動畫邏輯 ---
     window.onload = () => {
-        // 1. 開始進度條動畫
         setTimeout(() => { progress.style.width = '100%'; }, 100);
-
-        // 2. 兩秒後淡出啟動頁面
         setTimeout(() => {
             splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            
-            // 3. 啟動頁面消失後，才顯示輸入金額的提示
-            setTimeout(initGame, 500);
-        }, 2200);
+            splash.style.transform = 'scale(1.1)'; // 消失時輕微放大，增加動態感
+            setTimeout(() => {
+                splash.style.visibility = 'hidden';
+                initGame();
+            }, 1000);
+        }, 2500);
     };
 
     function initGame() {
-        const initial = prompt("Jumping Fun Simulation\nEnter initial simulation balance ($):", "1000");
+        const initial = prompt("JUMPING FUN RESEARCH\nPlease enter initial simulation balance ($):", "1000");
         balance = parseFloat(initial) || 1000;
         updateUI();
         createPins();
         animate();
-        addLog("Research session started with $" + balance);
+        addLog("Simulation started. Capital: $" + balance.toLocaleString());
     }
 
     function createPins() {
@@ -214,70 +212,77 @@
 
     function updateUI() {
         document.getElementById('balanceDisplay').innerText = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        document.getElementById('statsDisplay').innerText = `Total Drops: ${totalDrops}`;
+        document.getElementById('statsDisplay').innerText = `RESEARCH DATA COLLECTED: ${totalDrops}`;
     }
 
     function addLog(msg) {
         const entry = document.createElement('div');
-        entry.style.marginBottom = "4px";
-        entry.innerHTML = `<span style="color: #666;">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+        entry.style.borderBottom = "1px solid #111";
+        entry.style.padding = "4px 0";
+        entry.innerHTML = `<span style="color: #444;">#</span> ${msg}`;
         log.prepend(entry);
     }
 
     document.getElementById('dropButton').onclick = () => {
         const bet = parseFloat(document.getElementById('betInput').value);
         if (bet > balance || bet <= 0) {
-            addLog("<span style='color:#f44336'>ALERT: Insufficient balance or invalid bet.</span>");
+            addLog("<span style='color:#f44336'>ERR: Insufficient Funds.</span>");
             return;
         }
         balance -= bet;
         totalDrops++;
         updateUI();
-        balls.push({ x: canvas.width / 2 + (Math.random() * 4 - 2), y: 50, vx: 0, vy: 2, bet: bet });
+        balls.push({ x: canvas.width / 2 + (Math.random() * 2 - 1), y: 50, vx: 0, vy: 2, bet: bet });
     };
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#444';
+        
+        // Pins
+        ctx.fillStyle = '#333';
         pins.forEach(pin => {
             ctx.beginPath(); ctx.arc(pin.x, pin.y, pinRadius, 0, Math.PI * 2); ctx.fill();
         });
 
+        // Buckets
         const bucketWidth = canvas.width / multipliers.length;
         multipliers.forEach((m, i) => {
             ctx.fillStyle = m >= 1 ? '#4CAF50' : '#f44336';
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText(`${m}x`, i * bucketWidth + bucketWidth/3, canvas.height - 10);
+            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, canvas.height - 15);
         });
 
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
-            b.vy += 0.15; b.x += b.vx; b.y += b.vy; b.vx *= 0.99;
+            b.vy += 0.2; b.x += b.vx; b.y += b.vy; b.vx *= 0.98;
 
             pins.forEach(pin => {
                 const dx = b.x - pin.x; const dy = b.y - pin.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < ballRadius + pinRadius) {
                     const angle = Math.atan2(dy, dx);
-                    const force = 1.6;
+                    const force = 2.2;
                     b.vx += Math.cos(angle) * force + (Math.random() - 0.5);
-                    b.vy = Math.abs(Math.sin(angle) * force) + 1.2;
+                    b.vy = Math.abs(Math.sin(angle) * force) + 1.5;
                     b.y = pin.y + (ballRadius + pinRadius + 1) * Math.sin(angle);
                 }
             });
 
-            if (b.x < 0 || b.x > canvas.width) b.vx *= -0.5;
+            if (b.x < 10 || b.x > canvas.width - 10) b.vx *= -0.6;
 
-            ctx.fillStyle = '#fff'; ctx.shadowBlur = 10; ctx.shadowColor = '#fff';
+            // Ball Glow Effect
+            ctx.shadowBlur = 15; ctx.shadowColor = '#fff';
+            ctx.fillStyle = '#fff';
             ctx.beginPath(); ctx.arc(b.x, b.y, ballRadius, 0, Math.PI * 2); ctx.fill();
             ctx.shadowBlur = 0;
 
-            if (b.y > canvas.height - 30) {
+            if (b.y > canvas.height - 40) {
                 const bucketIndex = Math.floor(b.x / bucketWidth);
                 const mult = multipliers[Math.min(bucketIndex, multipliers.length - 1)] || 0;
                 const win = b.bet * mult;
                 balance += win;
-                addLog(`Result: ${mult}x | <span style="color:${win >= b.bet ? '#4CAF50' : '#f44336'}">$${win.toFixed(2)}</span>`);
+                addLog(`MULT: ${mult}x | NET: <span style="color:${win >= b.bet ? '#4CAF50' : '#f44336'}">$${win.toFixed(2)}</span>`);
                 balls.splice(i, 1);
                 updateUI();
             }
