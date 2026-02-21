@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jumping Fun | EGS Research</title>
+    <title>Pinball! Moment | EGS Research</title>
     <style>
         :root {
-            --primary: #4CAF50;
-            --bg: #0f0f0f;
-            --card: #1e1e1e;
-            --text: #ffffff;
+            --primary: #2e7d32;
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
         }
 
         /* --- Splash Screen --- */
@@ -17,44 +18,44 @@
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: var(--bg);
+            background: #ffffff;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 10000;
-            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), visibility 1s, transform 1s;
+            transition: opacity 1s ease;
         }
 
         #splash-screen img {
-            width: 450px; /* 根據你的圖片比例優化 */
+            width: 450px;
             height: auto;
             margin-bottom: 30px;
-            animation: pulse 2s infinite ease-in-out;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards ease-in-out;
         }
 
-        @keyframes pulse {
-            0% { filter: drop-shadow(0 0 5px rgba(255,255,255,0.1)); transform: scale(1); }
-            50% { filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.4)); transform: scale(1.02); }
-            100% { filter: drop-shadow(0 0 5px rgba(255,255,255,0.1)); transform: scale(1); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .loading-bar {
-            width: 250px; height: 2px;
-            background: #333;
-            border-radius: 1px;
+            width: 200px; height: 3px;
+            background: #eee;
+            border-radius: 2px;
             overflow: hidden;
         }
 
         .loading-progress {
             width: 0%; height: 100%;
             background: var(--primary);
-            transition: width 2s cubic-bezier(0.65, 0, 0.35, 1);
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         /* --- Main Game Styles --- */
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
@@ -65,62 +66,75 @@
 
         .container {
             background: var(--card);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-            display: flex; gap: 25px;
-            border: 1px solid #333;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex; gap: 30px;
+            border: 1px solid var(--border);
         }
 
         .controls { display: flex; flex-direction: column; gap: 20px; min-width: 280px; }
-        h2 { margin: 0; color: var(--primary); font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; }
+        
+        h2 { 
+            margin: 0; 
+            color: var(--text); 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            letter-spacing: -1.5px;
+            text-transform: uppercase;
+        }
         
         .stat-box {
-            background: #111;
+            background: #f9f9fb;
             padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #333;
+            border-radius: 12px;
+            border: 1px solid #eee;
         }
 
-        input, button {
-            background: #2a2a2a;
-            border: 1px solid #444;
-            color: white;
+        input {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
             padding: 12px;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 1rem;
         }
 
         button {
-            background: var(--primary);
-            color: #000;
+            background: var(--text);
+            color: #ffffff;
             border: none;
+            padding: 15px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 700;
+            font-weight: 600;
             text-transform: uppercase;
             transition: all 0.2s;
         }
 
-        button:hover { background: #66bb6a; transform: translateY(-2px); }
+        button:hover { background: #333; transform: translateY(-1px); }
         button:active { transform: translateY(0); }
 
         canvas {
-            background: #000;
+            background: #ffffff;
             border-radius: 12px;
-            border: 1px solid #444;
+            border: 1px solid #eee;
         }
 
         .log {
-            font-family: 'Fira Code', 'Courier New', monospace;
-            font-size: 0.85rem;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.8rem;
             height: 180px;
             overflow-y: auto;
-            background: #050505;
+            background: #f5f5f7;
             padding: 12px;
-            border-radius: 6px;
-            color: #4CAF50;
-            border: 1px solid #222;
+            border-radius: 8px;
+            color: #444;
+            border: 1px solid #eee;
+            line-height: 1.5;
         }
+
+        .header { text-align: center; margin-bottom: 30px; }
     </style>
 </head>
 <body>
@@ -132,9 +146,9 @@
         </div>
     </div>
 
-    <div class="header" style="text-align: center; margin-bottom: 30px;">
-        <h2>JUMPING FUN</h2>
-        <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">ENTERTAINMENT GAMES SOFT • RESEARCH DIV</div>
+    <div class="header">
+        <h2>Pinball! Moment</h2>
+        <div style="color: #888; font-size: 0.85rem; margin-top: 5px; font-weight: 500;">ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
     </div>
 
     <div class="container">
@@ -142,27 +156,52 @@
 
         <div class="controls">
             <div class="stat-box">
-                <div style="font-size: 0.75rem; color: #888; text-transform: uppercase; margin-bottom: 5px;">Total Balance</div>
-                <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--primary);">$0.00</div>
+                <div style="font-size: 0.75rem; color: #888; font-weight: 600; margin-bottom: 5px;">CURRENT BALANCE</div>
+                <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">$0.00</div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
-                <label style="font-size: 0.85rem; color: #888;">WAGER PER DROP</label>
+                <label style="font-size: 0.8rem; color: #666; font-weight: 600;">STAKE AMOUNT</label>
                 <input type="number" id="betInput" value="10" min="1">
             </div>
 
-            <button id="dropButton" style="height: 60px; font-size: 1.2rem;">Release Ball</button>
+            <button id="dropButton">Release Ball</button>
 
             <div class="log" id="gameLog">
-                [SYSTEM]: EGS Engine Initialized.<br>
-                [SYSTEM]: Waiting for session...
+                [SYSTEM]: Audio & Physics Engine Ready.<br>
             </div>
             
-            <div id="statsDisplay" style="font-size: 0.8rem; color: #555; text-align: center;">RESEARCH DATA COLLECTED: 0</div>
+            <div id="statsDisplay" style="font-size: 0.75rem; color: #aaa; text-align: center; letter-spacing: 1px;">SAMPLES COLLECTED: 0</div>
         </div>
     </div>
 
 <script>
+    // --- 音效引擎 (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, type, duration, vol = 0.1) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    const soundCollision = () => playSound(600 + Math.random() * 200, 'triangle', 0.1, 0.05);
+    const soundWin = () => {
+        playSound(523.25, 'sine', 0.3, 0.1); // C5
+        setTimeout(() => playSound(659.25, 'sine', 0.3, 0.1), 100); // E5
+        setTimeout(() => playSound(783.99, 'sine', 0.5, 0.1), 200); // G5
+    };
+    const soundLoss = () => playSound(150, 'sawtooth', 0.4, 0.05);
+
+    // --- 遊戲邏輯 ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const log = document.getElementById('gameLog');
@@ -180,24 +219,23 @@
     const multipliers = [5, 2, 1.2, 0.5, 0.2, 0.5, 1.2, 2, 5];
 
     window.onload = () => {
-        setTimeout(() => { progress.style.width = '100%'; }, 100);
+        setTimeout(() => { progress.style.width = '100%'; }, 200);
         setTimeout(() => {
             splash.style.opacity = '0';
-            splash.style.transform = 'scale(1.1)'; // 消失時輕微放大，增加動態感
             setTimeout(() => {
                 splash.style.visibility = 'hidden';
                 initGame();
             }, 1000);
-        }, 2500);
+        }, 2800);
     };
 
     function initGame() {
-        const initial = prompt("JUMPING FUN RESEARCH\nPlease enter initial simulation balance ($):", "1000");
+        const initial = prompt("PINBALL! MOMENT RESEARCH\nEnter simulation balance ($):", "1000");
         balance = parseFloat(initial) || 1000;
         updateUI();
         createPins();
         animate();
-        addLog("Simulation started. Capital: $" + balance.toLocaleString());
+        addLog("Audio System initialized. Capital: $" + balance.toLocaleString());
     }
 
     function createPins() {
@@ -212,43 +250,41 @@
 
     function updateUI() {
         document.getElementById('balanceDisplay').innerText = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        document.getElementById('statsDisplay').innerText = `RESEARCH DATA COLLECTED: ${totalDrops}`;
+        document.getElementById('statsDisplay').innerText = `SAMPLES COLLECTED: ${totalDrops}`;
     }
 
     function addLog(msg) {
         const entry = document.createElement('div');
-        entry.style.borderBottom = "1px solid #111";
-        entry.style.padding = "4px 0";
-        entry.innerHTML = `<span style="color: #444;">#</span> ${msg}`;
+        entry.style.marginBottom = "5px";
+        entry.innerHTML = `<span style="color: #bbb;">#</span> ${msg}`;
         log.prepend(entry);
     }
 
     document.getElementById('dropButton').onclick = () => {
         const bet = parseFloat(document.getElementById('betInput').value);
         if (bet > balance || bet <= 0) {
-            addLog("<span style='color:#f44336'>ERR: Insufficient Funds.</span>");
+            addLog("<span style='color:#d32f2f'>ERR: Insufficient Funds.</span>");
             return;
         }
         balance -= bet;
         totalDrops++;
         updateUI();
         balls.push({ x: canvas.width / 2 + (Math.random() * 2 - 1), y: 50, vx: 0, vy: 2, bet: bet });
+        playSound(400, 'sine', 0.1, 0.1); // 發球聲
     };
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Pins
-        ctx.fillStyle = '#333';
+        ctx.fillStyle = '#d2d2d7';
         pins.forEach(pin => {
             ctx.beginPath(); ctx.arc(pin.x, pin.y, pinRadius, 0, Math.PI * 2); ctx.fill();
         });
 
-        // Buckets
         const bucketWidth = canvas.width / multipliers.length;
         multipliers.forEach((m, i) => {
-            ctx.fillStyle = m >= 1 ? '#4CAF50' : '#f44336';
-            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.fillStyle = m >= 1 ? '#2e7d32' : '#d32f2f';
+            ctx.font = 'bold 11px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, canvas.height - 15);
         });
@@ -261,6 +297,7 @@
                 const dx = b.x - pin.x; const dy = b.y - pin.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < ballRadius + pinRadius) {
+                    soundCollision(); // 播放碰撞聲
                     const angle = Math.atan2(dy, dx);
                     const force = 2.2;
                     b.vx += Math.cos(angle) * force + (Math.random() - 0.5);
@@ -271,18 +308,19 @@
 
             if (b.x < 10 || b.x > canvas.width - 10) b.vx *= -0.6;
 
-            // Ball Glow Effect
-            ctx.shadowBlur = 15; ctx.shadowColor = '#fff';
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = '#1d1d1f';
             ctx.beginPath(); ctx.arc(b.x, b.y, ballRadius, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
 
             if (b.y > canvas.height - 40) {
                 const bucketIndex = Math.floor(b.x / bucketWidth);
                 const mult = multipliers[Math.min(bucketIndex, multipliers.length - 1)] || 0;
                 const win = b.bet * mult;
                 balance += win;
-                addLog(`MULT: ${mult}x | NET: <span style="color:${win >= b.bet ? '#4CAF50' : '#f44336'}">$${win.toFixed(2)}</span>`);
+                
+                // 根據倍數播放不同音效
+                if (mult >= 1) soundWin(); else soundLoss();
+
+                addLog(`MULT: ${mult}x | <span style="color:${win >= b.bet ? '#2e7d32' : '#d32f2f'}">$${win.toFixed(2)}</span>`);
                 balls.splice(i, 1);
                 updateUI();
             }
