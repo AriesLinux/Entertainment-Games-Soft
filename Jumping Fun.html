@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EGS | Pinball Probability Research</title>
+    <title>Jumping Fun | EGS Research</title>
     <style>
         :root {
             --primary: #4CAF50;
@@ -12,6 +12,43 @@
             --text: #e0e0e0;
         }
 
+        /* --- 啟動頁面樣式 --- */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        #splash-screen img {
+            width: 300px; /* Logo 大小 */
+            height: auto;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.3));
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: var(--primary);
+            transition: width 1.5s ease-in-out;
+        }
+
+        /* --- 遊戲原有樣式 --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg);
@@ -19,8 +56,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px;
         }
 
         .container {
@@ -33,15 +69,9 @@
             max-width: 900px;
         }
 
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            min-width: 250px;
-        }
-
-        h2 { margin: 0; color: var(--primary); font-size: 1.2rem; }
-
+        .controls { display: flex; flex-direction: column; gap: 15px; min-width: 250px; }
+        h2 { margin: 0; color: var(--primary); font-size: 1.5rem; text-transform: uppercase; letter-spacing: 2px; }
+        
         .stat-box {
             background: rgba(0,0,0,0.2);
             padding: 10px;
@@ -63,11 +93,11 @@
             border: none;
             cursor: pointer;
             font-weight: bold;
-            transition: opacity 0.2s;
+            transition: transform 0.1s, opacity 0.2s;
         }
 
+        button:active { transform: scale(0.95); }
         button:hover { opacity: 0.8; }
-        button:disabled { background: #666; cursor: not-allowed; }
 
         canvas {
             background: #111;
@@ -81,9 +111,10 @@
             height: 150px;
             overflow-y: auto;
             background: #000;
-            padding: 5px;
+            padding: 10px;
             border-radius: 4px;
             color: #0f0;
+            border: 1px solid #333;
         }
 
         .header { text-align: center; margin-bottom: 20px; }
@@ -91,9 +122,17 @@
 </head>
 <body>
 
+    <div id="splash-screen">
+        <img src="https://github.com/user-attachments/assets/7c433560-5b9c-4b27-b533-46ab583b1575" alt="EGS Logo">
+        <div class="loading-bar">
+            <div class="loading-progress" id="load-progress"></div>
+        </div>
+        <p style="font-size: 0.8rem; color: #666; margin-top: 10px;">Initializing Jumping Fun Engine...</p>
+    </div>
+
     <div class="header">
-        <h2>Entertainment Games Soft (EGS)</h2>
-        <small>Provably Fair Pinball & Probability Research Tool</small>
+        <h2>Jumping Fun</h2>
+        <small style="color: #888;">Powered by Entertainment Games Soft Research</small>
     </div>
 
     <div class="container">
@@ -101,22 +140,23 @@
 
         <div class="controls">
             <div class="stat-box">
-                <div>Balance: <span id="balanceDisplay">$0.00</span></div>
+                <div style="font-size: 0.8rem; color: #888;">Available Balance</div>
+                <div id="balanceDisplay" style="font-size: 1.5rem; font-weight: bold;">$0.00</div>
             </div>
 
-            <label>Bet Amount ($):</label>
+            <label>Wager Amount ($):</label>
             <input type="number" id="betInput" value="10" min="1">
 
-            <button id="dropButton">DROP BALL</button>
+            <button id="dropButton">RELEASE BALL</button>
 
             <div class="stat-box">
-                <small>Probability Monitor (Total Drops):</small>
-                <div id="statsDisplay">Drops: 0</div>
+                <small>Probability Monitor:</small>
+                <div id="statsDisplay">Total Drops: 0</div>
             </div>
 
             <div class="log" id="gameLog">
-                [SYSTEM]: Initialize EGS Engine...<br>
-                [SYSTEM]: Ready for simulation.
+                [SYSTEM]: Research Environment Loaded.<br>
+                [SYSTEM]: Waiting for session start.
             </div>
         </div>
     </div>
@@ -125,8 +165,9 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const log = document.getElementById('gameLog');
+    const splash = document.getElementById('splash-screen');
+    const progress = document.getElementById('load-progress');
     
-    // Game State
     let balance = 0;
     let totalDrops = 0;
     const pins = [];
@@ -135,132 +176,112 @@
     const pinRadius = 3;
     const ballRadius = 6;
     let balls = [];
-    
-    // Multipliers for the buckets (Symmetric Gaussian-like distribution)
     const multipliers = [5, 2, 1.2, 0.5, 0.2, 0.5, 1.2, 2, 5];
 
-    // Initialization
+    // --- 啟動動畫邏輯 ---
     window.onload = () => {
-        const initial = prompt("Welcome to EGS Research. Enter initial simulation balance ($):", "1000");
+        // 1. 開始進度條動畫
+        setTimeout(() => { progress.style.width = '100%'; }, 100);
+
+        // 2. 兩秒後淡出啟動頁面
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            splash.style.visibility = 'hidden';
+            
+            // 3. 啟動頁面消失後，才顯示輸入金額的提示
+            setTimeout(initGame, 500);
+        }, 2200);
+    };
+
+    function initGame() {
+        const initial = prompt("Jumping Fun Simulation\nEnter initial simulation balance ($):", "1000");
         balance = parseFloat(initial) || 1000;
         updateUI();
         createPins();
         animate();
-    };
+        addLog("Research session started with $" + balance);
+    }
 
     function createPins() {
         for (let i = 2; i < rows; i++) {
             const rowWidth = i * pinSpacing;
             const startX = (canvas.width - rowWidth) / 2 + pinSpacing/2;
             for (let j = 0; j < i; j++) {
-                pins.push({
-                    x: startX + j * pinSpacing,
-                    y: 100 + i * pinSpacing
-                });
+                pins.push({ x: startX + j * pinSpacing, y: 100 + i * pinSpacing });
             }
         }
     }
 
     function updateUI() {
-        document.getElementById('balanceDisplay').innerText = `$${balance.toFixed(2)}`;
-        document.getElementById('statsDisplay').innerText = `Drops: ${totalDrops}`;
+        document.getElementById('balanceDisplay').innerText = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        document.getElementById('statsDisplay').innerText = `Total Drops: ${totalDrops}`;
     }
 
     function addLog(msg) {
         const entry = document.createElement('div');
-        entry.innerHTML = `> ${msg}`;
+        entry.style.marginBottom = "4px";
+        entry.innerHTML = `<span style="color: #666;">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
         log.prepend(entry);
     }
 
     document.getElementById('dropButton').onclick = () => {
         const bet = parseFloat(document.getElementById('betInput').value);
-        
-        if (bet > balance) {
-            addLog("<span style='color:red'>Insufficient Funds</span>");
+        if (bet > balance || bet <= 0) {
+            addLog("<span style='color:#f44336'>ALERT: Insufficient balance or invalid bet.</span>");
             return;
         }
-
         balance -= bet;
         totalDrops++;
         updateUI();
-
-        // Create new ball
-        balls.push({
-            x: canvas.width / 2 + (Math.random() * 4 - 2), // Small random offset
-            y: 50,
-            vx: 0,
-            vy: 2,
-            bet: bet
-        });
-        
-        addLog(`Dropped ball with $${bet} bet`);
+        balls.push({ x: canvas.width / 2 + (Math.random() * 4 - 2), y: 50, vx: 0, vy: 2, bet: bet });
     };
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw Pins
-        ctx.fillStyle = '#777';
+        ctx.fillStyle = '#444';
         pins.forEach(pin => {
-            ctx.beginPath();
-            ctx.arc(pin.x, pin.y, pinRadius, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(pin.x, pin.y, pinRadius, 0, Math.PI * 2); ctx.fill();
         });
 
-        // Draw Buckets/Multipliers
         const bucketWidth = canvas.width / multipliers.length;
         multipliers.forEach((m, i) => {
             ctx.fillStyle = m >= 1 ? '#4CAF50' : '#f44336';
-            ctx.font = '10px Arial';
+            ctx.font = 'bold 12px Arial';
             ctx.fillText(`${m}x`, i * bucketWidth + bucketWidth/3, canvas.height - 10);
         });
 
-        // Update and Draw Balls
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
-            
-            // Physics
-            b.vy += 0.15; // Gravity
-            b.x += b.vx;
-            b.y += b.vy;
-            b.vx *= 0.99; // Air friction
+            b.vy += 0.15; b.x += b.vx; b.y += b.vy; b.vx *= 0.99;
 
-            // Pin Collision
             pins.forEach(pin => {
-                const dx = b.x - pin.x;
-                const dy = b.y - pin.y;
+                const dx = b.x - pin.x; const dy = b.y - pin.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < ballRadius + pinRadius) {
-                    // Collision response
                     const angle = Math.atan2(dy, dx);
-                    const force = 1.5;
+                    const force = 1.6;
                     b.vx += Math.cos(angle) * force + (Math.random() - 0.5);
-                    b.vy = Math.abs(Math.sin(angle) * force) + 1; // Ensure it bounces down
+                    b.vy = Math.abs(Math.sin(angle) * force) + 1.2;
                     b.y = pin.y + (ballRadius + pinRadius + 1) * Math.sin(angle);
                 }
             });
 
-            // Wall collision
             if (b.x < 0 || b.x > canvas.width) b.vx *= -0.5;
 
-            // Draw Ball
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, ballRadius, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.fillStyle = '#fff'; ctx.shadowBlur = 10; ctx.shadowColor = '#fff';
+            ctx.beginPath(); ctx.arc(b.x, b.y, ballRadius, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
 
-            // Check if reached bottom
             if (b.y > canvas.height - 30) {
                 const bucketIndex = Math.floor(b.x / bucketWidth);
                 const mult = multipliers[Math.min(bucketIndex, multipliers.length - 1)] || 0;
                 const win = b.bet * mult;
                 balance += win;
-                addLog(`Landed on ${mult}x. Result: <span style="color:${win >= b.bet ? '#0f0' : '#f00'}">+$${win.toFixed(2)}</span>`);
+                addLog(`Result: ${mult}x | <span style="color:${win >= b.bet ? '#4CAF50' : '#f44336'}">$${win.toFixed(2)}</span>`);
                 balls.splice(i, 1);
                 updateUI();
             }
         }
-
         requestAnimationFrame(animate);
     }
 </script>
