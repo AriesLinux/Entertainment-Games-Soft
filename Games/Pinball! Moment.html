@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pinball! Moment | High Volatility Edition</title>
+    <title>Pinball! Moment | MOP Extreme Edition</title>
     <style>
         :root {
             --primary: #1b5e20;
@@ -14,6 +14,7 @@
             --danger: #b71c1c;
         }
 
+        /* --- Loading Screen --- */
         #splash-screen {
             position: fixed;
             top: 0; left: 0;
@@ -53,6 +54,7 @@
             transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* --- Main Layout --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
@@ -79,7 +81,7 @@
             color: var(--text); 
             font-size: 1.8rem; 
             font-weight: 800; 
-            letter-spacing: -1px;
+            letter-spacing: -1.5px;
         }
         
         .stat-box {
@@ -94,8 +96,9 @@
             border: 1px solid var(--border);
             padding: 12px;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: bold;
+            width: 90%;
         }
 
         button {
@@ -111,8 +114,8 @@
             transition: all 0.2s;
         }
 
-        button:hover { background: #000; transform: scale(1.02); }
-        button:active { transform: scale(0.98); }
+        button:hover { background: #000; transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
 
         canvas {
             background: #ffffff;
@@ -123,7 +126,7 @@
         .log {
             font-family: 'SFMono-Regular', Consolas, monospace;
             font-size: 0.75rem;
-            height: 180px;
+            height: 200px;
             overflow-y: auto;
             background: #fdfdfd;
             padding: 12px;
@@ -146,35 +149,35 @@
 
     <div class="header">
         <h2>Pinball! Moment</h2>
-        <div style="color: #b71c1c; font-size: 0.75rem; font-weight: 900; letter-spacing: 1.5px; margin-top: 5px;">HIGH VOLATILITY ENGINE v2.0</div>
+        <div style="color: #b71c1c; font-size: 0.75rem; font-weight: 900; letter-spacing: 2px; margin-top: 5px;">MOP EXTREME RESEARCH ENGINE</div>
     </div>
 
     <div class="container">
-        <canvas id="gameCanvas" width="500" height="650"></canvas>
+        <canvas id="gameCanvas" width="500" height="750"></canvas>
 
         <div class="controls">
             <div class="stat-box">
-                <div style="font-size: 0.7rem; color: #888; font-weight: 700;">LIQUID CAPITAL</div>
+                <div style="font-size: 0.7rem; color: #888; font-weight: 700;">CAPITAL (MOP)</div>
                 <div id="balanceDisplay" style="font-size: 2.2rem; font-weight: 800;">$0.00</div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
-                <label style="font-size: 0.75rem; color: #666; font-weight: 700;">STAKE (RISK LEVEL)</label>
-                <input type="number" id="betInput" value="50" min="1">
+                <label style="font-size: 0.75rem; color: #666; font-weight: 700;">STAKE (MOP)</label>
+                <input type="number" id="betInput" value="100" min="10">
             </div>
 
-            <button id="dropButton">Confirm Release</button>
+            <button id="dropButton">INITIATE DROP</button>
 
             <div class="log" id="gameLog">
-                [SECURE]: Probability Matrix Loaded.<br>
+                [SECURE]: Probability Matrix Configured.<br>
             </div>
             
-            <div id="statsDisplay" style="font-size: 0.7rem; color: #bbb; text-align: center; font-weight: 600;">SAMPLES COLLECTED: 0</div>
+            <div id="statsDisplay" style="font-size: 0.7rem; color: #bbb; text-align: center; font-weight: 600;">DATA SAMPLES: 0</div>
         </div>
     </div>
 
 <script>
-    // --- Audio Engine (Web Audio API) ---
+    // --- Audio Synthesis ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playSound(freq, type, duration, vol = 0.1) {
@@ -189,13 +192,11 @@
         osc.start(); osc.stop(audioCtx.currentTime + duration);
     }
 
-    const soundCollision = () => playSound(800 + Math.random() * 400, 'square', 0.05, 0.03);
-    const soundJackpot = () => {
-        [600, 800, 1000, 1200].forEach((f, i) => setTimeout(() => playSound(f, 'sine', 0.4, 0.1), i * 100));
-    };
-    const soundBust = () => playSound(80, 'sawtooth', 0.5, 0.1);
+    const soundCollision = () => playSound(900 + Math.random() * 500, 'square', 0.05, 0.02);
+    const soundWin = () => [600, 900, 1300].forEach((f, i) => setTimeout(() => playSound(f, 'sine', 0.5, 0.1), i * 80));
+    const soundLoss = () => playSound(60, 'sawtooth', 0.6, 0.1);
 
-    // --- Core Logic ---
+    // --- Game Logic ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const log = document.getElementById('gameLog');
@@ -205,14 +206,14 @@
     let balance = 0;
     let totalDrops = 0;
     const pins = [];
-    const rows = 14; // Increased rows for higher complexity
-    const pinSpacing = 34;
-    const pinRadius = 2.5;
-    const ballRadius = 6.5;
+    const rows = 18; // Increased from 14 to 18 rows for extreme difficulty
+    const pinSpacing = 27;
+    const pinRadius = 2.2;
+    const ballRadius = 5.5;
     let balls = [];
     
-    // High Volatility Multipliers: Center is the "Dead Zone", Edges are "Jackpots"
-    const multipliers = [20, 10, 5, 1.5, 0.2, 0.1, 0.1, 0.2, 1.5, 5, 10, 20];
+    // Multipliers: Widened the "Dead Zone" (0.1X) in the middle. Edge is capped at 20X.
+    const multipliers = [20, 10, 5, 1, 0.2, 0.1, 0.1, 0.1, 0.1, 0.2, 1, 5, 10, 20];
 
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
@@ -223,8 +224,8 @@
     };
 
     function initGame() {
-        const initial = prompt("PINBALL! MOMENT HIGH-VOLATILITY\nEnter starting capital ($):", "2000");
-        balance = parseFloat(initial) || 2000;
+        const initial = prompt("PINBALL! MOMENT EXTREME\nEnter MOP Capital Amount:", "5000");
+        balance = parseFloat(initial) || 5000;
         updateUI();
         createPins();
         animate();
@@ -235,24 +236,25 @@
             const rowWidth = i * pinSpacing;
             const startX = (canvas.width - rowWidth) / 2 + pinSpacing/2;
             for (let j = 0; j < i; j++) {
-                // Add minor random noise to pin positions for unpredictability
+                // High density forest with randomized micro-offsets
                 pins.push({ 
-                    x: startX + j * pinSpacing + (Math.random() * 2 - 1), 
-                    y: 80 + i * pinSpacing 
+                    x: startX + j * pinSpacing + (Math.random() * 1.5 - 0.75), 
+                    y: 70 + i * pinSpacing 
                 });
             }
         }
     }
 
     function updateUI() {
-        document.getElementById('balanceDisplay').innerText = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-        document.getElementById('statsDisplay').innerText = `SAMPLES COLLECTED: ${totalDrops}`;
+        // Formatted to Macau Pataca (MOP)
+        document.getElementById('balanceDisplay').innerText = `MOP $${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        document.getElementById('statsDisplay').innerText = `DATA SAMPLES: ${totalDrops}`;
     }
 
     function addLog(msg) {
         const entry = document.createElement('div');
         entry.style.borderBottom = "1px solid #f0f0f0";
-        entry.style.padding = "3px 0";
+        entry.style.padding = "4px 0";
         entry.innerHTML = msg;
         log.prepend(entry);
     }
@@ -260,31 +262,31 @@
     document.getElementById('dropButton').onclick = () => {
         const bet = parseFloat(document.getElementById('betInput').value);
         if (bet > balance || bet <= 0) {
-            addLog("<span style='color:var(--danger)'>[FAIL]: Balance Exhausted.</span>");
+            addLog("<span style='color:var(--danger)'>[ALERT]: MOP Balance Insufficient.</span>");
             return;
         }
         balance -= bet;
         totalDrops++;
         updateUI();
-        // Spawning with a slight random velocity to break symmetry
-        balls.push({ x: canvas.width / 2 + (Math.random() * 6 - 3), y: 40, vx: (Math.random() - 0.5) * 2, vy: 3, bet: bet });
-        playSound(300, 'sine', 0.1, 0.1);
+        // Drop ball with slight random tilt
+        balls.push({ x: canvas.width / 2 + (Math.random() * 4 - 2), y: 35, vx: (Math.random() - 0.5), vy: 3, bet: bet });
+        playSound(440, 'sine', 0.1, 0.05);
     };
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Render Pins
-        ctx.fillStyle = '#bbb';
+        // Pins
+        ctx.fillStyle = '#d2d2d7';
         pins.forEach(pin => {
             ctx.beginPath(); ctx.arc(pin.x, pin.y, pinRadius, 0, Math.PI * 2); ctx.fill();
         });
 
-        // Render High-Stakes Buckets
+        // Slots
         const bucketWidth = canvas.width / multipliers.length;
         multipliers.forEach((m, i) => {
-            ctx.fillStyle = m > 1 ? '#1b5e20' : '#b71c1c';
-            ctx.font = '900 12px Inter, sans-serif';
+            ctx.fillStyle = m >= 1 ? '#1b5e20' : '#b71c1c';
+            ctx.font = 'bold 10px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, canvas.height - 15);
         });
@@ -292,46 +294,46 @@
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
             
-            // Extreme Physics: High gravity and low air friction
-            b.vy += 0.25; 
+            // Physics: High Gravity and High Velocity
+            b.vy += 0.3; 
             b.x += b.vx; 
             b.y += b.vy; 
-            b.vx *= 0.995;
+            b.vx *= 0.992;
 
-            // Pin Collision Logic
+            // Pin Collision Forest
             pins.forEach(pin => {
                 const dx = b.x - pin.x; const dy = b.y - pin.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < ballRadius + pinRadius) {
                     soundCollision();
                     const angle = Math.atan2(dy, dx);
-                    // Higher restitution (bounce force) for more excitement
-                    const force = 2.8;
-                    b.vx += Math.cos(angle) * force + (Math.random() - 0.5) * 1.5;
-                    b.vy = Math.abs(Math.sin(angle) * force) + 2; 
+                    // Higher restitution coefficient for chaotic bounce
+                    const force = 3.2; 
+                    b.vx += Math.cos(angle) * force + (Math.random() - 0.5) * 1.8;
+                    b.vy = Math.abs(Math.sin(angle) * force) + 2.5; 
                     b.y = pin.y + (ballRadius + pinRadius + 1) * Math.sin(angle);
                 }
             });
 
-            // Wall Collisions
-            if (b.x < 12 || b.x > canvas.width - 12) b.vx *= -0.7;
+            // Boundary Logic
+            if (b.x < 10 || b.x > canvas.width - 10) b.vx *= -0.8;
 
-            // Ball Rendering
+            // Render Ball
             ctx.fillStyle = '#1d1d1f';
             ctx.beginPath(); ctx.arc(b.x, b.y, ballRadius, 0, Math.PI * 2); ctx.fill();
 
-            // Bucket Landing Detection
+            // Result Detection
             if (b.y > canvas.height - 40) {
                 const bucketIndex = Math.floor(b.x / bucketWidth);
                 const mult = multipliers[Math.min(bucketIndex, multipliers.length - 1)] || 0;
                 const win = b.bet * mult;
                 balance += win;
                 
-                if (mult >= 10) soundJackpot(); 
-                else if (mult < 1) soundBust();
+                if (mult >= 5) soundWin(); 
+                else if (mult < 1) soundLoss();
 
-                const color = mult >= 1 ? '#1b5e20' : '#b71c1c';
-                addLog(`<span style="color:${color}">[DATA]: ${mult}X | RET: $${win.toFixed(2)}</span>`);
+                const logColor = mult >= 1 ? '#1b5e20' : '#b71c1c';
+                addLog(`<span style="color:${logColor}">[RET]: ${mult}X | MOP $${win.toFixed(2)}</span>`);
                 balls.splice(i, 1);
                 updateUI();
             }
