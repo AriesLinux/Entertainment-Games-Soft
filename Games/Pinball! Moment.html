@@ -102,6 +102,50 @@
             font-size: 1rem;
         }
 
+        /* 难度选择样式 */
+        .difficulty-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .difficulty-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 600;
+        }
+        .difficulty-options {
+            display: flex;
+            gap: 8px;
+        }
+        .difficulty-option {
+            flex: 1;
+            position: relative;
+        }
+        .difficulty-option input {
+            position: absolute;
+            opacity: 0;
+        }
+        .difficulty-option label {
+            display: block;
+            text-align: center;
+            padding: 10px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+        }
+        .difficulty-option input:checked + label {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+        }
+        .difficulty-option label:hover {
+            transform: translateY(-1px);
+        }
+
         button {
             background: var(--text);
             color: #ffffff;
@@ -163,9 +207,28 @@
                 <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
             </div>
 
+            <!-- 新增难度选择开关 -->
+            <div class="difficulty-selector">
+                <label class="difficulty-label">DIFFICULTY LEVEL</label>
+                <div class="difficulty-options">
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="low" value="low">
+                        <label for="low">LOW</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="medium" value="medium" checked>
+                        <label for="medium">MEDIUM</label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="high" value="high">
+                        <label for="high">HIGH</label>
+                    </div>
+                </div>
+            </div>
+
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 0.8rem; color: #666; font-weight: 600;">STAKE AMOUNT</label>
-                <input type="number" id="betInput" value="50" min="1">
+                <input type="number" id="betInput" value="30" min="1">
             </div>
 
             <button id="dropButton">Release Ball</button>
@@ -207,6 +270,53 @@
         playSound(200, 'sawtooth', 0.5, 0.1);
         setTimeout(() => playSound(100, 'sawtooth', 0.8, 0.1), 300);
     };
+    const soundSwitchDifficulty = () => playSound(300, 'sine', 0.15, 0.05);
+
+    // --- 难度配置表 ---
+    const difficultyConfig = {
+        low: {
+            name: "低难度",
+            rows: 10,
+            pinSpacing: 38,
+            pinRadius: 3,
+            ballRadius: 6,
+            gravity: 0.2,
+            bounceForce: 2.5,
+            horizontalDamping: 0.98,
+            wallBounce: 0.8,
+            randomOffset: 0.8,
+            multipliers: [3, 1.5, 1.2, 0.8, 0.6, 0.5, 0.6, 0.8, 1.2, 1.5, 3],
+            defaultBet: 10
+        },
+        medium: {
+            name: "中难度",
+            rows: 14,
+            pinSpacing: 35,
+            pinRadius: 3.5,
+            ballRadius: 5.5,
+            gravity: 0.28,
+            bounceForce: 2.0,
+            horizontalDamping: 0.96,
+            wallBounce: 0.5,
+            randomOffset: 0.6,
+            multipliers: [5, 2, 1.2, 0.5, 0.3, 0.2, 0.3, 0.5, 1.2, 2, 5],
+            defaultBet: 30
+        },
+        high: {
+            name: "高难度",
+            rows: 18,
+            pinSpacing: 32,
+            pinRadius: 3.8,
+            ballRadius: 5,
+            gravity: 0.35,
+            bounceForce: 1.7,
+            horizontalDamping: 0.93,
+            wallBounce: 0.3,
+            randomOffset: 0.4,
+            multipliers: [10, 3, 1.5, 0.8, 0.4, 0.2, 0.1, 0.2, 0.4, 0.8, 1.5, 3, 10],
+            defaultBet: 50
+        }
+    };
 
     // --- Game logic ---
     const canvas = document.getElementById('gameCanvas');
@@ -216,18 +326,14 @@
     const progress = document.getElementById('load-progress');
     const dropButton = document.getElementById('dropButton');
     const betInput = document.getElementById('betInput');
+    const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
     
+    let currentDifficulty = difficultyConfig.medium;
     let balance = 0;
     let totalDrops = 0;
     let isBankrupt = false;
     const pins = [];
-    const rows = 18; // 钉子行数从12增加到18，大幅提升碰撞次数
-    const pinSpacing = 32; // 缩小钉子间距，提升密度
-    const pinRadius = 3.5; // 加大钉子半径，提升碰撞概率
-    const ballRadius = 5; // 缩小弹珠半径，更易被钉子打乱轨迹
     let balls = [];
-    // 全新倍率分布：亏损区占比70%，高倍率集中在极难命中的边缘
-    const multipliers = [20, 10, 3, 0.8, 0.5, 0.2, 0.1, 0.2, 0.5, 0.8, 3, 10, 20];
 
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
@@ -236,6 +342,7 @@
             setTimeout(() => {
                 splash.style.visibility = 'hidden';
                 initGame();
+                bindDifficultySwitch();
             }, 1000);
         }, 2800);
     };
@@ -246,16 +353,46 @@
         updateUI();
         createPins();
         animate();
-        addLog("System initialized. Starting Capital: HK$" + balance.toLocaleString());
+        addLog(`System initialized. Starting Capital: HK$${balance.toLocaleString()}`);
+        addLog(`Current Difficulty: ${currentDifficulty.name}`);
         checkBankrupt();
     }
 
+    // 绑定难度切换事件
+    function bindDifficultySwitch() {
+        difficultyRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                // 更新当前难度配置
+                currentDifficulty = difficultyConfig[e.target.value];
+                // 清空空中弹珠，避免物理异常
+                balls = [];
+                // 重新生成钉子布局
+                pins.length = 0;
+                createPins();
+                // 更新默认下注金额
+                betInput.value = currentDifficulty.defaultBet;
+                // 音效与日志
+                soundSwitchDifficulty();
+                addLog(`Difficulty switched to: <span style="font-weight:700">${currentDifficulty.name}</span>`);
+                // 重置破产状态（切换难度可重新游玩）
+                if (isBankrupt) {
+                    isBankrupt = false;
+                    dropButton.disabled = false;
+                    betInput.disabled = false;
+                }
+            });
+        });
+    }
+
     function createPins() {
-        for (let i = 2; i < rows; i++) {
-            const rowWidth = i * pinSpacing;
-            const startX = (canvas.width - rowWidth) / 2 + pinSpacing/2;
+        for (let i = 2; i < currentDifficulty.rows; i++) {
+            const rowWidth = i * currentDifficulty.pinSpacing;
+            const startX = (canvas.width - rowWidth) / 2 + currentDifficulty.pinSpacing/2;
             for (let j = 0; j < i; j++) {
-                pins.push({ x: startX + j * pinSpacing, y: 80 + i * pinSpacing });
+                pins.push({ 
+                    x: startX + j * currentDifficulty.pinSpacing, 
+                    y: 80 + i * currentDifficulty.pinSpacing 
+                });
             }
         }
     }
@@ -280,7 +417,7 @@
             betInput.disabled = true;
             soundBankrupt();
             addLog("<span style='color:#d32f2f; font-weight:700;'>BANKRUPT! You have lost all your funds.</span>");
-            alert("BANKRUPT!\nYou have no remaining balance to continue playing.");
+            alert("BANKRUPT!\nYou have no remaining balance to continue playing.\nSwitch difficulty to reset.");
         }
     }
 
@@ -294,8 +431,15 @@
         balance -= bet;
         totalDrops++;
         updateUI();
-        // 缩小初始横向偏移，弹珠更易向中间掉落
-        balls.push({ x: canvas.width / 2 + (Math.random() * 1 - 0.5), y: 40, vx: 0, vy: 1.5, bet: bet });
+        // 初始横向偏移随难度调整
+        const initOffset = currentDifficulty.name === "高难度" ? 0.5 : 1;
+        balls.push({ 
+            x: canvas.width / 2 + (Math.random() * initOffset - initOffset/2), 
+            y: 40, 
+            vx: 0, 
+            vy: 1.5, 
+            bet: bet 
+        });
         playSound(400, 'sine', 0.1, 0.08);
     };
 
@@ -305,14 +449,16 @@
         // 绘制钉子
         ctx.fillStyle = '#d2d2d7';
         pins.forEach(pin => {
-            ctx.beginPath(); ctx.arc(pin.x, pin.y, pinRadius, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); 
+            ctx.arc(pin.x, pin.y, currentDifficulty.pinRadius, 0, Math.PI * 2); 
+            ctx.fill();
         });
 
         // 绘制倍率格子
+        const multipliers = currentDifficulty.multipliers;
         const bucketWidth = canvas.width / multipliers.length;
         multipliers.forEach((m, i) => {
-            // 亏损区红色更醒目，盈利区弱化
-            ctx.fillStyle = m >= 1 ? (m >= 10 ? '#1b5e20' : '#2e7d32') : '#d32f2f';
+            ctx.fillStyle = m >= 1 ? (m >= 5 ? '#1b5e20' : '#2e7d32') : '#d32f2f';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, canvas.height - 12);
@@ -328,36 +474,42 @@
         // 弹珠物理逻辑
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
-            b.vy += 0.35; // 重力提升75%，下落更快
+            // 重力随难度变化
+            b.vy += currentDifficulty.gravity;
             b.x += b.vx;
             b.y += b.vy;
-            b.vx *= 0.94; // 水平阻尼大幅提升，横向速度快速衰减
+            // 水平阻尼随难度变化
+            b.vx *= currentDifficulty.horizontalDamping;
 
             // 钉子碰撞逻辑
             pins.forEach(pin => {
                 const dx = b.x - pin.x;
                 const dy = b.y - pin.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < ballRadius + pinRadius) {
+                if (dist < currentDifficulty.ballRadius + currentDifficulty.pinRadius) {
                     soundCollision();
                     const angle = Math.atan2(dy, dx);
-                    const force = 1.8; // 降低反弹力度，减少横向位移
-                    // 缩小随机偏移，减少意外弹到边缘的概率
-                    b.vx += Math.cos(angle) * force + (Math.random() * 0.6 - 0.3);
+                    // 反弹力随难度变化
+                    const force = currentDifficulty.bounceForce;
+                    // 随机偏移随难度变化，难度越高越难控制
+                    const randomOffset = currentDifficulty.randomOffset;
+                    b.vx += Math.cos(angle) * force + (Math.random() * randomOffset - randomOffset/2);
                     b.vy = Math.abs(Math.sin(angle) * force) + 1;
-                    b.y = pin.y + (ballRadius + pinRadius + 1) * Math.sin(angle);
+                    b.y = pin.y + (currentDifficulty.ballRadius + currentDifficulty.pinRadius + 1) * Math.sin(angle);
                 }
             });
 
-            // 左右边界碰撞，反弹系数大幅降低
-            if (b.x < ballRadius || b.x > canvas.width - ballRadius) {
-                b.vx *= -0.3;
-                b.x = b.x < ballRadius ? ballRadius : canvas.width - ballRadius;
+            // 左右边界碰撞，反弹系数随难度变化
+            if (b.x < currentDifficulty.ballRadius || b.x > canvas.width - currentDifficulty.ballRadius) {
+                b.vx *= -currentDifficulty.wallBounce;
+                b.x = b.x < currentDifficulty.ballRadius ? currentDifficulty.ballRadius : canvas.width - currentDifficulty.ballRadius;
             }
 
             // 绘制弹珠
             ctx.fillStyle = '#1d1d1f';
-            ctx.beginPath(); ctx.arc(b.x, b.y, ballRadius, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); 
+            ctx.arc(b.x, b.y, currentDifficulty.ballRadius, 0, Math.PI * 2); 
+            ctx.fill();
 
             // 弹珠落到底部结算
             if (b.y > canvas.height - 35) {
@@ -369,13 +521,13 @@
                 // 音效
                 if (mult >= 1) soundWin(); else soundLoss();
 
-                // 日志输出，亏损高亮
+                // 日志输出
                 const isWin = win >= b.bet;
                 addLog(`MULT: ${mult}x | <span style="color:${isWin ? '#2e7d32' : '#d32f2f'}; font-weight:${isWin ? '500' : '700'}">HK$${win.toFixed(2)}</span>`);
                 
                 balls.splice(i, 1);
                 updateUI();
-                checkBankrupt(); // 每次结算后检查破产
+                checkBankrupt();
             }
         }
         requestAnimationFrame(animate);
