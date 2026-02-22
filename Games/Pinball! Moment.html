@@ -272,12 +272,12 @@
     };
     const soundSwitchDifficulty = () => playSound(300, 'sine', 0.15, 0.05);
 
-    // --- 难度配置表 ---
+    // --- 难度配置表 (已调整：增加行数、缩小间距) ---
     const difficultyConfig = {
         low: {
             name: "低难度",
-            rows: 10,
-            pinSpacing: 38,
+            rows: 16,          // 增加行数
+            pinSpacing: 28,    // 缩小间距
             pinRadius: 3,
             ballRadius: 6,
             gravity: 0.2,
@@ -290,8 +290,8 @@
         },
         medium: {
             name: "中难度",
-            rows: 14,
-            pinSpacing: 35,
+            rows: 20,          // 增加行数
+            pinSpacing: 24,    // 缩小间距
             pinRadius: 3.5,
             ballRadius: 5.5,
             gravity: 0.28,
@@ -304,8 +304,8 @@
         },
         high: {
             name: "高难度",
-            rows: 18,
-            pinSpacing: 32,
+            rows: 26,          // 增加行数
+            pinSpacing: 20,    // 缩小间距
             pinRadius: 3.8,
             ballRadius: 5,
             gravity: 0.35,
@@ -334,7 +334,7 @@
     let isBankrupt = false;
     const pins = [];
     let balls = [];
-    let bottomPinY = 0; // 新增：记录最底部钉子的Y坐标，用于倍率条定位
+    let bottomPinY = 0; 
 
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
@@ -363,18 +363,12 @@
     function bindDifficultySwitch() {
         difficultyRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
-                // 更新当前难度配置
                 currentDifficulty = difficultyConfig[e.target.value];
-                // 清空空中弹珠，避免物理异常
                 balls = [];
-                // 重新生成钉子布局，同步更新底部钉子坐标
                 createPins();
-                // 更新默认下注金额
                 betInput.value = currentDifficulty.defaultBet;
-                // 音效与日志
                 soundSwitchDifficulty();
                 addLog(`Difficulty switched to: <span style="font-weight:700">${currentDifficulty.name}</span>`);
-                // 重置破产状态（切换难度可重新游玩）
                 if (isBankrupt) {
                     isBankrupt = false;
                     dropButton.disabled = false;
@@ -384,24 +378,24 @@
         });
     }
 
-    // 重写钉子生成函数，计算最底部钉子坐标
+    // 重写钉子生成函数，调整起始位置以适应更密集的布局
     function createPins() {
-        pins.length = 0; // 清空原有钉子
+        pins.length = 0; 
         let maxPinY = 0;
-        for (let i = 2; i < currentDifficulty.rows; i++) {
+        // 从第 1 行开始生成（原来是第 2 行），增加顶部钉子
+        for (let i = 1; i < currentDifficulty.rows; i++) {
             const rowWidth = i * currentDifficulty.pinSpacing;
             const startX = (canvas.width - rowWidth) / 2 + currentDifficulty.pinSpacing/2;
             for (let j = 0; j < i; j++) {
-                const pinY = 80 + i * currentDifficulty.pinSpacing;
+                // 调整起始 Y 坐标，从 60 开始（原来是 80）
+                const pinY = 60 + i * currentDifficulty.pinSpacing;
                 pins.push({ 
                     x: startX + j * currentDifficulty.pinSpacing, 
                     y: pinY
                 });
-                // 记录最大的Y坐标（最底部的钉子）
                 if (pinY > maxPinY) maxPinY = pinY;
             }
         }
-        // 计算最底部钉子的最底端坐标，用于倍率条紧贴定位
         bottomPinY = maxPinY + currentDifficulty.pinRadius;
     }
 
@@ -439,7 +433,6 @@
         balance -= bet;
         totalDrops++;
         updateUI();
-        // 初始横向偏移随难度调整
         const initOffset = currentDifficulty.name === "高难度" ? 0.5 : 1;
         balls.push({ 
             x: canvas.width / 2 + (Math.random() * initOffset - initOffset/2), 
@@ -465,20 +458,17 @@
         // 绘制倍率条（紧贴最底部钉子）
         const multipliers = currentDifficulty.multipliers;
         const bucketWidth = canvas.width / multipliers.length;
-        const multiplierBarTop = bottomPinY + 8; // 与钉子仅留8px微小间距，实现紧贴效果
-        const multiplierBarHeight = 25; // 倍率条固定高度
+        const multiplierBarTop = bottomPinY + 8; 
+        const multiplierBarHeight = 25; 
         const multiplierBarBottom = multiplierBarTop + multiplierBarHeight;
 
         // 绘制每个倍率格子
         multipliers.forEach((m, i) => {
-            // 倍率文字颜色
             ctx.fillStyle = m >= 1 ? (m >= 5 ? '#1b5e20' : '#2e7d32') : '#d32f2f';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            // 文字居中显示在格子内
             ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, multiplierBarTop + multiplierBarHeight/2);
-            // 绘制格子竖分割线
             ctx.strokeStyle = '#eee';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -487,7 +477,7 @@
             ctx.stroke();
         });
 
-        // 绘制倍率条上下边框，视觉更规整
+        // 绘制倍率条上下边框
         ctx.strokeStyle = '#eee';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -500,11 +490,9 @@
         // 弹珠物理逻辑
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
-            // 重力随难度变化
             b.vy += currentDifficulty.gravity;
             b.x += b.vx;
             b.y += b.vy;
-            // 水平阻尼随难度变化
             b.vx *= currentDifficulty.horizontalDamping;
 
             // 钉子碰撞逻辑
@@ -515,9 +503,7 @@
                 if (dist < currentDifficulty.ballRadius + currentDifficulty.pinRadius) {
                     soundCollision();
                     const angle = Math.atan2(dy, dx);
-                    // 反弹力随难度变化
                     const force = currentDifficulty.bounceForce;
-                    // 随机偏移随难度变化，难度越高越难控制
                     const randomOffset = currentDifficulty.randomOffset;
                     b.vx += Math.cos(angle) * force + (Math.random() * randomOffset - randomOffset/2);
                     b.vy = Math.abs(Math.sin(angle) * force) + 1;
@@ -525,7 +511,7 @@
                 }
             });
 
-            // 左右边界碰撞，反弹系数随难度变化
+            // 左右边界碰撞
             if (b.x < currentDifficulty.ballRadius || b.x > canvas.width - currentDifficulty.ballRadius) {
                 b.vx *= -currentDifficulty.wallBounce;
                 b.x = b.x < currentDifficulty.ballRadius ? currentDifficulty.ballRadius : canvas.width - currentDifficulty.ballRadius;
@@ -537,7 +523,7 @@
             ctx.arc(b.x, b.y, currentDifficulty.ballRadius, 0, Math.PI * 2); 
             ctx.fill();
 
-            // 弹珠完全穿过倍率条后触发结算
+            // 弹珠结算逻辑
             const ballBottom = b.y + currentDifficulty.ballRadius;
             if (ballBottom > multiplierBarBottom) {
                 const bucketIndex = Math.floor(b.x / bucketWidth);
@@ -545,10 +531,8 @@
                 const win = b.bet * mult;
                 balance += win;
                 
-                // 音效
                 if (mult >= 1) soundWin(); else soundLoss();
 
-                // 日志输出
                 const isWin = win >= b.bet;
                 addLog(`MULT: ${mult}x | <span style="color:${isWin ? '#2e7d32' : '#d32f2f'}; font-weight:${isWin ? '500' : '700'}">HK$${win.toFixed(2)}</span>`);
                 
