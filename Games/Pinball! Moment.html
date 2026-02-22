@@ -260,7 +260,6 @@
     }
 
     const soundCollision = () => playSound(600 + Math.random() * 200, 'triangle', 0.08, 0.03);
-    const soundWallCollision = () => playSound(450 + Math.random() * 100, 'triangle', 0.06, 0.04);
     const soundWin = () => {
         playSound(523.25, 'sine', 0.2, 0.08);
         setTimeout(() => playSound(659.25, 'sine', 0.2, 0.08), 100);
@@ -335,9 +334,7 @@
     let isBankrupt = false;
     const pins = [];
     let balls = [];
-    let bottomPinY = 0; // 最底部钉子的Y坐标
-    let leftWall = {}; // 左侧倾斜挡板参数
-    let rightWall = {}; // 右侧倾斜挡板参数
+    let bottomPinY = 0; // 新增：记录最底部钉子的Y坐标，用于倍率条定位
 
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
@@ -366,12 +363,18 @@
     function bindDifficultySwitch() {
         difficultyRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
+                // 更新当前难度配置
                 currentDifficulty = difficultyConfig[e.target.value];
+                // 清空空中弹珠，避免物理异常
                 balls = [];
+                // 重新生成钉子布局，同步更新底部钉子坐标
                 createPins();
+                // 更新默认下注金额
                 betInput.value = currentDifficulty.defaultBet;
+                // 音效与日志
                 soundSwitchDifficulty();
                 addLog(`Difficulty switched to: <span style="font-weight:700">${currentDifficulty.name}</span>`);
+                // 重置破产状态（切换难度可重新游玩）
                 if (isBankrupt) {
                     isBankrupt = false;
                     dropButton.disabled = false;
@@ -381,129 +384,25 @@
         });
     }
 
-    // 钉子生成 + 倾斜挡板参数计算
+    // 重写钉子生成函数，计算最底部钉子坐标
     function createPins() {
-        pins.length = 0;
+        pins.length = 0; // 清空原有钉子
         let maxPinY = 0;
-        const rows = currentDifficulty.rows;
-        const pinSpacing = currentDifficulty.pinSpacing;
-        const pinRadius = currentDifficulty.pinRadius;
-
-        // 生成钉子
-        for (let i = 2; i < rows; i++) {
-            const rowWidth = i * pinSpacing;
-            const startX = (canvas.width - rowWidth) / 2 + pinSpacing/2;
+        for (let i = 2; i < currentDifficulty.rows; i++) {
+            const rowWidth = i * currentDifficulty.pinSpacing;
+            const startX = (canvas.width - rowWidth) / 2 + currentDifficulty.pinSpacing/2;
             for (let j = 0; j < i; j++) {
-                const pinY = 80 + i * pinSpacing;
+                const pinY = 80 + i * currentDifficulty.pinSpacing;
                 pins.push({ 
-                    x: startX + j * pinSpacing, 
+                    x: startX + j * currentDifficulty.pinSpacing, 
                     y: pinY
                 });
+                // 记录最大的Y坐标（最底部的钉子）
                 if (pinY > maxPinY) maxPinY = pinY;
             }
         }
-
-        // 计算最底部钉子坐标
-        bottomPinY = maxPinY + pinRadius;
-
-        // 计算左右倾斜挡板的起点和终点（完美贴合钉子阵边缘）
-        // 顶部行（i=2）的左右钉子坐标
-        const topRowI = 2;
-        const topRowWidth = topRowI * pinSpacing;
-        const topStartX = (canvas.width - topRowWidth) / 2 + pinSpacing/2;
-        const topLeftX = topStartX;
-        const topRightX = topStartX + (topRowI - 1) * pinSpacing;
-        const topRowY = 80 + topRowI * pinSpacing;
-
-        // 底部行（i=rows-1）的左右钉子坐标
-        const bottomRowI = rows - 1;
-        const bottomRowWidth = bottomRowI * pinSpacing;
-        const bottomStartX = (canvas.width - bottomRowWidth) / 2 + pinSpacing/2;
-        const bottomLeftX = bottomStartX;
-        const bottomRightX = bottomStartX + (bottomRowI - 1) * pinSpacing;
-        const bottomRowY = 80 + bottomRowI * pinSpacing;
-
-        // 左侧挡板：从顶部左钉子左上，斜到最底部左钉子左下，贴合钉子边缘
-        const wallOffset = pinRadius + 4; // 挡板与钉子的间距，防止挡住钉子
-        leftWall = {
-            startX: topLeftX - wallOffset,
-            startY: topRowY - 20,
-            endX: bottomLeftX - wallOffset,
-            endY: bottomRowY + 20
-        };
-
-        // 右侧挡板：从顶部右钉子右上，斜到最底部右钉子右下，贴合钉子边缘
-        rightWall = {
-            startX: topRightX + wallOffset,
-            startY: topRowY - 20,
-            endX: bottomRightX + wallOffset,
-            endY: bottomRowY + 20
-        };
-
-        // 预计算挡板直线的一般式参数（Ax + By + C = 0）和法线方向，用于碰撞检测
-        // 左侧挡板
-        const leftA = leftWall.endY - leftWall.startY;
-        const leftB = leftWall.startX - leftWall.endX;
-        const leftC = leftWall.endX * leftWall.startY - leftWall.startX * leftWall.endY;
-        const leftLen = Math.sqrt(leftA*leftA + leftB*leftB);
-        leftWall.A = leftA;
-        leftWall.B = leftB;
-        leftWall.C = leftC;
-        leftWall.normalX = leftA / leftLen; // 法线X方向（指向钉子阵内部）
-        leftWall.normalY = leftB / leftLen; // 法线Y方向
-
-        // 右侧挡板
-        const rightA = rightWall.endY - rightWall.startY;
-        const rightB = rightWall.startX - rightWall.endX;
-        const rightC = rightWall.endX * rightWall.startY - rightWall.startX * rightWall.endY;
-        const rightLen = Math.sqrt(rightA*rightA + rightB*rightB);
-        rightWall.A = rightA;
-        rightWall.B = rightB;
-        rightWall.C = rightC;
-        rightWall.normalX = -rightA / rightLen; // 法线X方向（指向钉子阵内部）
-        rightWall.normalY = -rightB / rightLen; // 法线Y方向
-    }
-
-    // 倾斜挡板碰撞检测与反弹处理
-    function checkWallCollision(ball, wall) {
-        const ballRadius = currentDifficulty.ballRadius;
-        // 计算球心到挡板直线的距离
-        const distance = Math.abs(wall.A * ball.x + wall.B * ball.y + wall.C) / Math.sqrt(wall.A*wall.A + wall.B*wall.B);
-        
-        // 检测是否碰撞（距离小于球半径）
-        if (distance < ballRadius) {
-            // 检测球是否在挡板的线段范围内，防止线段外的误碰撞
-            const lineVecX = wall.endX - wall.startX;
-            const lineVecY = wall.endY - wall.startY;
-            const ballVecX = ball.x - wall.startX;
-            const ballVecY = ball.y - wall.startY;
-            const lineLenSq = lineVecX*lineVecX + lineVecY*lineVecY;
-            const dot = ballVecX*lineVecX + ballVecY*lineVecY;
-            const t = Math.max(0, Math.min(1, dot / lineLenSq));
-            
-            // 线段上最近点
-            const closestX = wall.startX + t * lineVecX;
-            const closestY = wall.startY + t * lineVecY;
-            const distToClosest = Math.sqrt((ball.x - closestX)**2 + (ball.y - closestY)**2);
-            
-            if (distToClosest < ballRadius) {
-                // 碰撞音效
-                soundWallCollision();
-                
-                // 修正球的位置，防止穿模
-                const overlap = ballRadius - distToClosest;
-                ball.x += wall.normalX * (overlap + 0.5);
-                ball.y += wall.normalY * (overlap + 0.5);
-                
-                // 计算反射速度（物理公式：v' = v - 2(v·n)n）
-                const dotProduct = ball.vx * wall.normalX + ball.vy * wall.normalY;
-                ball.vx -= 2 * dotProduct * wall.normalX * currentDifficulty.wallBounce;
-                ball.vy -= 2 * dotProduct * wall.normalY * currentDifficulty.wallBounce;
-                
-                return true;
-            }
-        }
-        return false;
+        // 计算最底部钉子的最底端坐标，用于倍率条紧贴定位
+        bottomPinY = maxPinY + currentDifficulty.pinRadius;
     }
 
     function updateUI() {
@@ -555,7 +454,7 @@
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // 1. 绘制钉子
+        // 绘制钉子
         ctx.fillStyle = '#d2d2d7';
         pins.forEach(pin => {
             ctx.beginPath(); 
@@ -563,36 +462,23 @@
             ctx.fill();
         });
 
-        // 2. 绘制左右倾斜挡板
-        ctx.strokeStyle = '#86868b';
-        ctx.lineWidth = 4;
-        ctx.lineCap = 'round';
-        // 左侧挡板
-        ctx.beginPath();
-        ctx.moveTo(leftWall.startX, leftWall.startY);
-        ctx.lineTo(leftWall.endX, leftWall.endY);
-        ctx.stroke();
-        // 右侧挡板
-        ctx.beginPath();
-        ctx.moveTo(rightWall.startX, rightWall.startY);
-        ctx.lineTo(rightWall.endX, rightWall.endY);
-        ctx.stroke();
-
-        // 3. 绘制倍率条（紧贴最底部钉子）
+        // 绘制倍率条（紧贴最底部钉子）
         const multipliers = currentDifficulty.multipliers;
         const bucketWidth = canvas.width / multipliers.length;
-        const multiplierBarTop = bottomPinY + 8;
-        const multiplierBarHeight = 25;
+        const multiplierBarTop = bottomPinY + 8; // 与钉子仅留8px微小间距，实现紧贴效果
+        const multiplierBarHeight = 25; // 倍率条固定高度
         const multiplierBarBottom = multiplierBarTop + multiplierBarHeight;
 
-        // 绘制倍率格子
+        // 绘制每个倍率格子
         multipliers.forEach((m, i) => {
+            // 倍率文字颜色
             ctx.fillStyle = m >= 1 ? (m >= 5 ? '#1b5e20' : '#2e7d32') : '#d32f2f';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            // 文字居中显示在格子内
             ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, multiplierBarTop + multiplierBarHeight/2);
-            // 格子竖分割线
+            // 绘制格子竖分割线
             ctx.strokeStyle = '#eee';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -601,7 +487,7 @@
             ctx.stroke();
         });
 
-        // 倍率条上下边框
+        // 绘制倍率条上下边框，视觉更规整
         ctx.strokeStyle = '#eee';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -611,52 +497,48 @@
         ctx.lineTo(canvas.width, multiplierBarBottom);
         ctx.stroke();
 
-        // 4. 弹珠物理逻辑
+        // 弹珠物理逻辑
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
-            const ballRadius = currentDifficulty.ballRadius;
-
-            // 重力与速度更新
+            // 重力随难度变化
             b.vy += currentDifficulty.gravity;
             b.x += b.vx;
             b.y += b.vy;
+            // 水平阻尼随难度变化
             b.vx *= currentDifficulty.horizontalDamping;
 
-            // 钉子碰撞检测
+            // 钉子碰撞逻辑
             pins.forEach(pin => {
                 const dx = b.x - pin.x;
                 const dy = b.y - pin.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < ballRadius + currentDifficulty.pinRadius) {
+                if (dist < currentDifficulty.ballRadius + currentDifficulty.pinRadius) {
                     soundCollision();
                     const angle = Math.atan2(dy, dx);
+                    // 反弹力随难度变化
                     const force = currentDifficulty.bounceForce;
+                    // 随机偏移随难度变化，难度越高越难控制
                     const randomOffset = currentDifficulty.randomOffset;
                     b.vx += Math.cos(angle) * force + (Math.random() * randomOffset - randomOffset/2);
                     b.vy = Math.abs(Math.sin(angle) * force) + 1;
-                    b.y = pin.y + (ballRadius + currentDifficulty.pinRadius + 1) * Math.sin(angle);
+                    b.y = pin.y + (currentDifficulty.ballRadius + currentDifficulty.pinRadius + 1) * Math.sin(angle);
                 }
             });
 
-            // 左右倾斜挡板碰撞检测
-            checkWallCollision(b, leftWall);
-            checkWallCollision(b, rightWall);
-
-            // 画布左右垂直边界碰撞（兜底防护）
-            if (b.x < ballRadius || b.x > canvas.width - ballRadius) {
+            // 左右边界碰撞，反弹系数随难度变化
+            if (b.x < currentDifficulty.ballRadius || b.x > canvas.width - currentDifficulty.ballRadius) {
                 b.vx *= -currentDifficulty.wallBounce;
-                b.x = b.x < ballRadius ? ballRadius : canvas.width - ballRadius;
-                soundWallCollision();
+                b.x = b.x < currentDifficulty.ballRadius ? currentDifficulty.ballRadius : canvas.width - currentDifficulty.ballRadius;
             }
 
             // 绘制弹珠
             ctx.fillStyle = '#1d1d1f';
             ctx.beginPath(); 
-            ctx.arc(b.x, b.y, ballRadius, 0, Math.PI * 2); 
+            ctx.arc(b.x, b.y, currentDifficulty.ballRadius, 0, Math.PI * 2); 
             ctx.fill();
 
-            // 弹珠结算逻辑
-            const ballBottom = b.y + ballRadius;
+            // 弹珠完全穿过倍率条后触发结算
+            const ballBottom = b.y + currentDifficulty.ballRadius;
             if (ballBottom > multiplierBarBottom) {
                 const bucketIndex = Math.floor(b.x / bucketWidth);
                 const mult = multipliers[Math.min(Math.max(bucketIndex, 0), multipliers.length - 1)] || 0;
