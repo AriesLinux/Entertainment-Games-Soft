@@ -49,7 +49,7 @@
 
         .loading-progress {
             width: 0%; height: 100%;
-            background: var(--primary);
+            background: #000; /* 修改这里：改为纯黑色 */
             transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -157,7 +157,7 @@
         <div class="controls">
             <div class="stat-box">
                 <div style="font-size: 0.75rem; color: #888; font-weight: 600; margin-bottom: 5px;">CURRENT BALANCE</div>
-                <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">$0.00</div>
+                <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -230,12 +230,12 @@
     };
 
     function initGame() {
-        const initial = prompt("PINBALL! MOMENT RESEARCH\nEnter simulation balance ($):", "1000");
+        const initial = prompt("PINBALL! MOMENT RESEARCH\nEnter simulation balance (HK$):", "1000");
         balance = parseFloat(initial) || 1000;
         updateUI();
         createPins();
         animate();
-        addLog("Audio System initialized. Capital: $" + balance.toLocaleString());
+        addLog("Audio System initialized. Capital: HK$" + balance.toLocaleString());
     }
 
     function createPins() {
@@ -249,7 +249,8 @@
     }
 
     function updateUI() {
-        document.getElementById('balanceDisplay').innerText = `$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        // 修改这里：改为 HK$
+        document.getElementById('balanceDisplay').innerText = `HK$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         document.getElementById('statsDisplay').innerText = `SAMPLES COLLECTED: ${totalDrops}`;
     }
 
@@ -320,7 +321,8 @@
             
                 if (mult >= 1) soundWin(); else soundLoss();
 
-                addLog(`MULT: ${mult}x | <span style="color:${win >= b.bet ? '#2e7d32' : '#d32f2f'}">$${win.toFixed(2)}</span>`);
+                // 修改这里：日志中的金额也改为 HK$
+                addLog(`MULT: ${mult}x | <span style="color:${win >= b.bet ? '#2e7d32' : '#d32f2f'}">HK$${win.toFixed(2)}</span>`);
                 balls.splice(i, 1);
                 updateUI();
             }
