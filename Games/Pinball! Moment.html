@@ -207,7 +207,7 @@
                 <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
             </div>
 
-            <!-- 新增难度选择开关 -->
+            <!-- 难度选择开关 -->
             <div class="difficulty-selector">
                 <label class="difficulty-label">DIFFICULTY LEVEL</label>
                 <div class="difficulty-options">
@@ -334,6 +334,7 @@
     let isBankrupt = false;
     const pins = [];
     let balls = [];
+    let bottomPinY = 0; // 新增：记录最底部钉子的Y坐标，用于倍率条定位
 
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
@@ -366,8 +367,7 @@
                 currentDifficulty = difficultyConfig[e.target.value];
                 // 清空空中弹珠，避免物理异常
                 balls = [];
-                // 重新生成钉子布局
-                pins.length = 0;
+                // 重新生成钉子布局，同步更新底部钉子坐标
                 createPins();
                 // 更新默认下注金额
                 betInput.value = currentDifficulty.defaultBet;
@@ -384,17 +384,25 @@
         });
     }
 
+    // 重写钉子生成函数，计算最底部钉子坐标
     function createPins() {
+        pins.length = 0; // 清空原有钉子
+        let maxPinY = 0;
         for (let i = 2; i < currentDifficulty.rows; i++) {
             const rowWidth = i * currentDifficulty.pinSpacing;
             const startX = (canvas.width - rowWidth) / 2 + currentDifficulty.pinSpacing/2;
             for (let j = 0; j < i; j++) {
+                const pinY = 80 + i * currentDifficulty.pinSpacing;
                 pins.push({ 
                     x: startX + j * currentDifficulty.pinSpacing, 
-                    y: 80 + i * currentDifficulty.pinSpacing 
+                    y: pinY
                 });
+                // 记录最大的Y坐标（最底部的钉子）
+                if (pinY > maxPinY) maxPinY = pinY;
             }
         }
+        // 计算最底部钉子的最底端坐标，用于倍率条紧贴定位
+        bottomPinY = maxPinY + currentDifficulty.pinRadius;
     }
 
     function updateUI() {
@@ -454,22 +462,40 @@
             ctx.fill();
         });
 
-        // 绘制倍率格子
+        // 绘制倍率条（紧贴最底部钉子）
         const multipliers = currentDifficulty.multipliers;
         const bucketWidth = canvas.width / multipliers.length;
+        const multiplierBarTop = bottomPinY + 8; // 与钉子仅留8px微小间距，实现紧贴效果
+        const multiplierBarHeight = 25; // 倍率条固定高度
+        const multiplierBarBottom = multiplierBarTop + multiplierBarHeight;
+
+        // 绘制每个倍率格子
         multipliers.forEach((m, i) => {
+            // 倍率文字颜色
             ctx.fillStyle = m >= 1 ? (m >= 5 ? '#1b5e20' : '#2e7d32') : '#d32f2f';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, canvas.height - 12);
-            // 绘制格子分割线
+            ctx.textBaseline = 'middle';
+            // 文字居中显示在格子内
+            ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, multiplierBarTop + multiplierBarHeight/2);
+            // 绘制格子竖分割线
             ctx.strokeStyle = '#eee';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(i * bucketWidth, canvas.height - 30);
-            ctx.lineTo(i * bucketWidth, canvas.height);
+            ctx.moveTo(i * bucketWidth, multiplierBarTop);
+            ctx.lineTo(i * bucketWidth, multiplierBarBottom);
             ctx.stroke();
         });
+
+        // 绘制倍率条上下边框，视觉更规整
+        ctx.strokeStyle = '#eee';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, multiplierBarTop);
+        ctx.lineTo(canvas.width, multiplierBarTop);
+        ctx.moveTo(0, multiplierBarBottom);
+        ctx.lineTo(canvas.width, multiplierBarBottom);
+        ctx.stroke();
 
         // 弹珠物理逻辑
         for (let i = balls.length - 1; i >= 0; i--) {
@@ -511,8 +537,9 @@
             ctx.arc(b.x, b.y, currentDifficulty.ballRadius, 0, Math.PI * 2); 
             ctx.fill();
 
-            // 弹珠落到底部结算
-            if (b.y > canvas.height - 35) {
+            // 弹珠完全穿过倍率条后触发结算
+            const ballBottom = b.y + currentDifficulty.ballRadius;
+            if (ballBottom > multiplierBarBottom) {
                 const bucketIndex = Math.floor(b.x / bucketWidth);
                 const mult = multipliers[Math.min(Math.max(bucketIndex, 0), multipliers.length - 1)] || 0;
                 const win = b.bet * mult;
