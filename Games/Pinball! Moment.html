@@ -11,6 +11,8 @@
             --card: #ffffff;
             --text: #1d1d1f;
             --border: #d2d2d7;
+            --loss: #d32f2f;
+            --win: #2e7d32;
         }
 
         /* --- Splash Screen --- */
@@ -49,7 +51,7 @@
 
         .loading-progress {
             width: 0%; height: 100%;
-            background: #000; /* 修改这里：改为纯黑色 */
+            background: #000;
             transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -114,6 +116,7 @@
 
         button:hover { background: #333; transform: translateY(-1px); }
         button:active { transform: translateY(0); }
+        button:disabled { background: #aaa; cursor: not-allowed; transform: none; }
 
         canvas {
             background: #ffffff;
@@ -152,7 +155,7 @@
     </div>
 
     <div class="container">
-        <canvas id="gameCanvas" width="500" height="600"></canvas>
+        <canvas id="gameCanvas" width="500" height="700"></canvas>
 
         <div class="controls">
             <div class="stat-box">
@@ -162,7 +165,7 @@
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 0.8rem; color: #666; font-weight: 600;">STAKE AMOUNT</label>
-                <input type="number" id="betInput" value="10" min="1">
+                <input type="number" id="betInput" value="50" min="1">
             </div>
 
             <button id="dropButton">Release Ball</button>
@@ -193,13 +196,17 @@
         osc.stop(audioCtx.currentTime + duration);
     }
 
-    const soundCollision = () => playSound(600 + Math.random() * 200, 'triangle', 0.1, 0.05);
+    const soundCollision = () => playSound(600 + Math.random() * 200, 'triangle', 0.08, 0.03);
     const soundWin = () => {
-        playSound(523.25, 'sine', 0.3, 0.1); // C5
-        setTimeout(() => playSound(659.25, 'sine', 0.3, 0.1), 100); // E5
-        setTimeout(() => playSound(783.99, 'sine', 0.5, 0.1), 200); // G5
+        playSound(523.25, 'sine', 0.2, 0.08);
+        setTimeout(() => playSound(659.25, 'sine', 0.2, 0.08), 100);
+        setTimeout(() => playSound(783.99, 'sine', 0.3, 0.08), 200);
     };
-    const soundLoss = () => playSound(150, 'sawtooth', 0.4, 0.05);
+    const soundLoss = () => playSound(150, 'sawtooth', 0.3, 0.06);
+    const soundBankrupt = () => {
+        playSound(200, 'sawtooth', 0.5, 0.1);
+        setTimeout(() => playSound(100, 'sawtooth', 0.8, 0.1), 300);
+    };
 
     // --- Game logic ---
     const canvas = document.getElementById('gameCanvas');
@@ -207,16 +214,20 @@
     const log = document.getElementById('gameLog');
     const splash = document.getElementById('splash-screen');
     const progress = document.getElementById('load-progress');
+    const dropButton = document.getElementById('dropButton');
+    const betInput = document.getElementById('betInput');
     
     let balance = 0;
     let totalDrops = 0;
+    let isBankrupt = false;
     const pins = [];
-    const rows = 12;
-    const pinSpacing = 35;
-    const pinRadius = 3;
-    const ballRadius = 6;
+    const rows = 18; // 钉子行数从12增加到18，大幅提升碰撞次数
+    const pinSpacing = 32; // 缩小钉子间距，提升密度
+    const pinRadius = 3.5; // 加大钉子半径，提升碰撞概率
+    const ballRadius = 5; // 缩小弹珠半径，更易被钉子打乱轨迹
     let balls = [];
-    const multipliers = [5, 2, 1.2, 0.5, 0.2, 0.5, 1.2, 2, 5];
+    // 全新倍率分布：亏损区占比70%，高倍率集中在极难命中的边缘
+    const multipliers = [20, 10, 3, 0.8, 0.5, 0.2, 0.1, 0.2, 0.5, 0.8, 3, 10, 20];
 
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
@@ -230,12 +241,13 @@
     };
 
     function initGame() {
-        const initial = prompt("PINBALL! MOMENT RESEARCH\nEnter simulation balance (HK$):", "1000");
-        balance = parseFloat(initial) || 1000;
+        const initial = prompt("PINBALL! MOMENT RESEARCH\nEnter simulation balance (HK$):", "500");
+        balance = parseFloat(initial) || 500;
         updateUI();
         createPins();
         animate();
-        addLog("Audio System initialized. Capital: HK$" + balance.toLocaleString());
+        addLog("System initialized. Starting Capital: HK$" + balance.toLocaleString());
+        checkBankrupt();
     }
 
     function createPins() {
@@ -243,13 +255,12 @@
             const rowWidth = i * pinSpacing;
             const startX = (canvas.width - rowWidth) / 2 + pinSpacing/2;
             for (let j = 0; j < i; j++) {
-                pins.push({ x: startX + j * pinSpacing, y: 100 + i * pinSpacing });
+                pins.push({ x: startX + j * pinSpacing, y: 80 + i * pinSpacing });
             }
         }
     }
 
     function updateUI() {
-        // 修改这里：改为 HK$
         document.getElementById('balanceDisplay').innerText = `HK$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         document.getElementById('statsDisplay').innerText = `SAMPLES COLLECTED: ${totalDrops}`;
     }
@@ -261,8 +272,21 @@
         log.prepend(entry);
     }
 
-    document.getElementById('dropButton').onclick = () => {
-        const bet = parseFloat(document.getElementById('betInput').value);
+    // 破产检测机制
+    function checkBankrupt() {
+        if (balance < 1 && !isBankrupt) {
+            isBankrupt = true;
+            dropButton.disabled = true;
+            betInput.disabled = true;
+            soundBankrupt();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>BANKRUPT! You have lost all your funds.</span>");
+            alert("BANKRUPT!\nYou have no remaining balance to continue playing.");
+        }
+    }
+
+    dropButton.onclick = () => {
+        if (isBankrupt) return;
+        const bet = parseFloat(betInput.value);
         if (bet > balance || bet <= 0) {
             addLog("<span style='color:#d32f2f'>ERR: Insufficient Funds.</span>");
             return;
@@ -270,61 +294,88 @@
         balance -= bet;
         totalDrops++;
         updateUI();
-        balls.push({ x: canvas.width / 2 + (Math.random() * 2 - 1), y: 50, vx: 0, vy: 2, bet: bet });
-        playSound(400, 'sine', 0.1, 0.1); // FAQIUSHENG
+        // 缩小初始横向偏移，弹珠更易向中间掉落
+        balls.push({ x: canvas.width / 2 + (Math.random() * 1 - 0.5), y: 40, vx: 0, vy: 1.5, bet: bet });
+        playSound(400, 'sine', 0.1, 0.08);
     };
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
+        // 绘制钉子
         ctx.fillStyle = '#d2d2d7';
         pins.forEach(pin => {
             ctx.beginPath(); ctx.arc(pin.x, pin.y, pinRadius, 0, Math.PI * 2); ctx.fill();
         });
 
+        // 绘制倍率格子
         const bucketWidth = canvas.width / multipliers.length;
         multipliers.forEach((m, i) => {
-            ctx.fillStyle = m >= 1 ? '#2e7d32' : '#d32f2f';
-            ctx.font = 'bold 11px sans-serif';
+            // 亏损区红色更醒目，盈利区弱化
+            ctx.fillStyle = m >= 1 ? (m >= 10 ? '#1b5e20' : '#2e7d32') : '#d32f2f';
+            ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, canvas.height - 15);
+            ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, canvas.height - 12);
+            // 绘制格子分割线
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(i * bucketWidth, canvas.height - 30);
+            ctx.lineTo(i * bucketWidth, canvas.height);
+            ctx.stroke();
         });
 
+        // 弹珠物理逻辑
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
-            b.vy += 0.2; b.x += b.vx; b.y += b.vy; b.vx *= 0.98;
+            b.vy += 0.35; // 重力提升75%，下落更快
+            b.x += b.vx;
+            b.y += b.vy;
+            b.vx *= 0.94; // 水平阻尼大幅提升，横向速度快速衰减
 
+            // 钉子碰撞逻辑
             pins.forEach(pin => {
-                const dx = b.x - pin.x; const dy = b.y - pin.y;
+                const dx = b.x - pin.x;
+                const dy = b.y - pin.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < ballRadius + pinRadius) {
-                    soundCollision(); // PENGZHUANGSHENG
+                    soundCollision();
                     const angle = Math.atan2(dy, dx);
-                    const force = 2.2;
-                    b.vx += Math.cos(angle) * force + (Math.random() - 0.5);
-                    b.vy = Math.abs(Math.sin(angle) * force) + 1.5;
+                    const force = 1.8; // 降低反弹力度，减少横向位移
+                    // 缩小随机偏移，减少意外弹到边缘的概率
+                    b.vx += Math.cos(angle) * force + (Math.random() * 0.6 - 0.3);
+                    b.vy = Math.abs(Math.sin(angle) * force) + 1;
                     b.y = pin.y + (ballRadius + pinRadius + 1) * Math.sin(angle);
                 }
             });
 
-            if (b.x < 10 || b.x > canvas.width - 10) b.vx *= -0.6;
+            // 左右边界碰撞，反弹系数大幅降低
+            if (b.x < ballRadius || b.x > canvas.width - ballRadius) {
+                b.vx *= -0.3;
+                b.x = b.x < ballRadius ? ballRadius : canvas.width - ballRadius;
+            }
 
+            // 绘制弹珠
             ctx.fillStyle = '#1d1d1f';
             ctx.beginPath(); ctx.arc(b.x, b.y, ballRadius, 0, Math.PI * 2); ctx.fill();
 
-            if (b.y > canvas.height - 40) {
+            // 弹珠落到底部结算
+            if (b.y > canvas.height - 35) {
                 const bucketIndex = Math.floor(b.x / bucketWidth);
-                const mult = multipliers[Math.min(bucketIndex, multipliers.length - 1)] || 0;
+                const mult = multipliers[Math.min(Math.max(bucketIndex, 0), multipliers.length - 1)] || 0;
                 const win = b.bet * mult;
                 balance += win;
                 
-            
+                // 音效
                 if (mult >= 1) soundWin(); else soundLoss();
 
-                // 修改这里：日志中的金额也改为 HK$
-                addLog(`MULT: ${mult}x | <span style="color:${win >= b.bet ? '#2e7d32' : '#d32f2f'}">HK$${win.toFixed(2)}</span>`);
+                // 日志输出，亏损高亮
+                const isWin = win >= b.bet;
+                addLog(`MULT: ${mult}x | <span style="color:${isWin ? '#2e7d32' : '#d32f2f'}; font-weight:${isWin ? '500' : '700'}">HK$${win.toFixed(2)}</span>`);
+                
                 balls.splice(i, 1);
                 updateUI();
+                checkBankrupt(); // 每次结算后检查破产
             }
         }
         requestAnimationFrame(animate);
