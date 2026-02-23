@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pinball! Moment | EGS Research</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         :root {
             --primary: #2e7d32;
             --bg: #f5f5f7;
@@ -13,58 +18,63 @@
             --border: #d2d2d7;
             --loss: #d32f2f;
             --win: #2e7d32;
-            --mask: rgba(0, 0, 0, 0.5);
+            --mask: rgba(0, 0, 0, 0.6);
         }
 
-        
+       
         .modal-mask {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background: var(--mask);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 20000;
+            z-index: 99999;
             backdrop-filter: blur(4px);
         }
 
         .modal-card {
             background: var(--card);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
             width: 90%;
-            max-width: 360px;
+            max-width: 380px;
             border: 1px solid var(--border);
-            animation: modalFadeIn 0.3s ease;
+            animation: modalFadeIn 0.3s ease-out;
         }
 
         @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .modal-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--text);
-            margin: 0 0 15px 0;
+            margin: 0 0 12px 0;
             letter-spacing: -0.5px;
             text-transform: uppercase;
         }
 
         .modal-desc {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #666;
             margin: 0 0 20px 0;
-            line-height: 1.4;
+            line-height: 1.5;
         }
 
         .modal-input {
             width: 100%;
-            box-sizing: border-box;
             margin-bottom: 20px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
         }
 
         .modal-buttons {
@@ -74,7 +84,7 @@
         }
 
         .modal-btn {
-            padding: 10px 20px;
+            padding: 10px 22px;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
@@ -108,13 +118,14 @@
             cursor: not-allowed;
             transform: none;
         }
-        /* ====================================================== */
 
         /* --- Splash Screen --- */
         #splash-screen {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background: #ffffff;
             display: flex;
             flex-direction: column;
@@ -138,14 +149,16 @@
         }
 
         .loading-bar {
-            width: 200px; height: 3px;
+            width: 200px;
+            height: 3px;
             background: #eee;
             border-radius: 2px;
             overflow: hidden;
         }
 
         .loading-progress {
-            width: 0%; height: 100%;
+            width: 0%;
+            height: 100%;
             background: #000;
             transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -158,7 +171,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0; padding: 20px;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
         }
 
         .container {
@@ -166,11 +181,21 @@
             padding: 30px;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            display: flex; gap: 30px;
+            display: flex;
+            gap: 30px;
             border: 1px solid var(--border);
+            max-width: 900px;
+            width: 100%;
         }
 
-        .controls { display: flex; flex-direction: column; gap: 20px; min-width: 280px; }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 280px;
+            width: 100%;
+            max-width: 300px;
+        }
         
         h2 { 
             margin: 0; 
@@ -191,7 +216,7 @@
             align-items: center;
         }
 
-        
+         
         .add-balance-btn {
             background: var(--text);
             color: #fff;
@@ -207,6 +232,7 @@
             justify-content: center;
             align-items: center;
             line-height: 1;
+            z-index: 10;
         }
         .add-balance-btn:hover { background: #333; transform: translateY(-1px); }
         .add-balance-btn:active { transform: translateY(0); }
@@ -218,6 +244,7 @@
             padding: 12px;
             border-radius: 8px;
             font-size: 1rem;
+            width: 100%;
         }
 
         
@@ -274,6 +301,7 @@
             font-weight: 600;
             text-transform: uppercase;
             transition: all 0.2s;
+            width: 100%;
         }
 
         button:hover { background: #333; transform: translateY(-1px); }
@@ -284,6 +312,7 @@
             background: #ffffff;
             border-radius: 12px;
             border: 1px solid #eee;
+            flex-shrink: 0;
         }
 
         .log {
@@ -291,7 +320,7 @@
             font-size: 0.8rem;
             height: 180px;
             overflow-y: auto;
-            background: #f5f5f7;
+            background: #f9f9fb;
             padding: 12px;
             border-radius: 8px;
             color: #444;
@@ -299,12 +328,15 @@
             line-height: 1.5;
         }
 
-        .header { text-align: center; margin-bottom: 30px; }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
 
-    
+   
     <div class="modal-mask" id="passwordModal">
         <div class="modal-card">
             <h3 class="modal-title">Admin Verification</h3>
@@ -317,7 +349,7 @@
         </div>
     </div>
 
-     
+    
     <div class="modal-mask" id="amountModal">
         <div class="modal-card">
             <h3 class="modal-title">Add Balance</h3>
@@ -330,7 +362,7 @@
         </div>
     </div>
 
-     
+   
     <div class="modal-mask" id="alertModal">
         <div class="modal-card">
             <h3 class="modal-title" id="alertTitle">Notice</h3>
@@ -340,8 +372,8 @@
             </div>
         </div>
     </div>
-    <!-- ====================================================== -->
 
+   
     <div id="splash-screen">
         <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="EGS Logo">
         <div class="loading-bar">
@@ -349,11 +381,13 @@
         </div>
     </div>
 
+     
     <div class="header">
         <h2>Pinball! Moment</h2>
         <div style="color: #888; font-size: 0.85rem; margin-top: 5px; font-weight: 500;">ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
     </div>
 
+     
     <div class="container">
         <canvas id="gameCanvas" width="500" height="700"></canvas>
 
@@ -381,25 +415,29 @@
                 </div>
             </div>
 
+            
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <label style="font-size: 0.8rem; color: #666; font-weight: 600;">STAKE AMOUNT</label>
                 <input type="number" id="betInput" value="30" min="1">
             </div>
 
+            
             <button id="dropButton">Release Ball</button>
 
+          
             <div class="log" id="gameLog">
                 [SYSTEM]: Audio & Physics Engine Ready.<br>
                 [SYSTEM]: Optimized Multiplier Bar Loaded.<br>
                 [SYSTEM]: Local Storage Enabled.<br>
             </div>
             
+           
             <div id="statsDisplay" style="font-size: 0.75rem; color: #aaa; text-align: center; letter-spacing: 1px;">SAMPLES COLLECTED: 0</div>
         </div>
     </div>
 
 <script>
-    // (Web Audio API) ---
+     
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playSound(freq, type, duration, vol = 0.1) {
@@ -431,7 +469,7 @@
     const soundSuccess = () => playSound(800, 'sine', 0.15, 0.08);
     const soundError = () => playSound(200, 'square', 0.2, 0.05);
 
-     
+   
     const difficultyConfig = {
         low: {
             name: "低难度",
@@ -463,7 +501,7 @@
         }
     };
 
-    // --- Game logic ---
+     
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const log = document.getElementById('gameLog');
@@ -483,53 +521,57 @@
     let bottomPinY = 0;
     let maxPinRowWidth = 0;
 
-     
+ 
+    const STORAGE_KEY_BALANCE = 'egs_game_balance';
+    const STORAGE_KEY_SAMPLES = 'pinball_moment_samples';
     const ADMIN_PASSWORD = '198297';
-     
+ 
+    function loadFromStorage() {
+        const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
+        const savedSamples = localStorage.getItem(STORAGE_KEY_SAMPLES);
+        balance = savedBalance ? parseFloat(savedBalance) : 0;
+        totalDrops = savedSamples ? parseInt(savedSamples) : 0;
+    }
+
+  
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEY_BALANCE, balance.toFixed(2));
+        localStorage.setItem(STORAGE_KEY_SAMPLES, totalDrops.toString());
+    }
+
+    
     const passwordModal = document.getElementById('passwordModal');
     const amountModal = document.getElementById('amountModal');
     const alertModal = document.getElementById('alertModal');
-     
     const passwordInput = document.getElementById('passwordInput');
     const amountInput = document.getElementById('amountInput');
-     
     const passwordCancelBtn = document.getElementById('passwordCancelBtn');
     const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
     const amountCancelBtn = document.getElementById('amountCancelBtn');
     const amountConfirmBtn = document.getElementById('amountConfirmBtn');
     const alertConfirmBtn = document.getElementById('alertConfirmBtn');
-     
     const alertTitle = document.getElementById('alertTitle');
     const alertContent = document.getElementById('alertContent');
 
-     
     function openModal(modal) {
         modal.style.display = 'flex';
-         
         const input = modal.querySelector('input');
-        if (input) {
-            setTimeout(() => input.focus(), 100);
-        }
+        if (input) setTimeout(() => input.focus(), 100);
     }
 
-     
     function closeModal(modal) {
         modal.style.display = 'none';
-         
         const input = modal.querySelector('input');
-        if (input) {
-            input.value = '';
-        }
+        if (input) input.value = '';
     }
 
-     
     function showAlert(title, content) {
         alertTitle.innerText = title;
         alertContent.innerText = content;
         openModal(alertModal);
     }
 
-     
+ 
     passwordConfirmBtn.onclick = () => {
         const inputPwd = passwordInput.value.trim();
         if (inputPwd !== ADMIN_PASSWORD) {
@@ -539,14 +581,12 @@
             showAlert("Access Denied", "Incorrect admin password!");
             return;
         }
-
-         
         soundSuccess();
         closeModal(passwordModal);
         openModal(amountModal);
     };
 
-    
+ 
     amountConfirmBtn.onclick = () => {
         const inputAmount = parseFloat(amountInput.value.trim());
         if (isNaN(inputAmount) || inputAmount <= 0) {
@@ -555,8 +595,6 @@
             showAlert("Invalid Input", "Please enter a valid positive number!");
             return;
         }
-
-         
         balance += inputAmount;
         if (isBankrupt) {
             isBankrupt = false;
@@ -574,50 +612,23 @@
     passwordCancelBtn.onclick = () => closeModal(passwordModal);
     amountCancelBtn.onclick = () => closeModal(amountModal);
     alertConfirmBtn.onclick = () => closeModal(alertModal);
-
      
-    passwordInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') passwordConfirmBtn.click();
-    });
-    amountInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') amountConfirmBtn.click();
-    });
-    alertContent.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') alertConfirmBtn.click();
-    });
-
-     
-    [passwordModal, amountModal, alertModal].forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal(modal);
-            }
+    [passwordInput, amountInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') e.target.closest('.modal-card').querySelector('.modal-btn-confirm').click();
         });
     });
-    // ======================================================
+    
+   
+    [passwordModal, amountModal, alertModal].forEach(modal => {
+        modal.addEventListener('click', (e) => e.target === modal && closeModal(modal));
+    });
 
      
-    const STORAGE_KEY_BALANCE = 'pinball_moment_balance';
-    const STORAGE_KEY_SAMPLES = 'pinball_moment_samples';
-
-    function loadFromStorage() {
-        const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
-        const savedSamples = localStorage.getItem(STORAGE_KEY_SAMPLES);
-        balance = savedBalance ? parseFloat(savedBalance) : 500;
-        totalDrops = savedSamples ? parseInt(savedSamples) : 0;
-    }
-
-    function saveToStorage() {
-        localStorage.setItem(STORAGE_KEY_BALANCE, balance.toFixed(2));
-        localStorage.setItem(STORAGE_KEY_SAMPLES, totalDrops.toString());
-    }
-
-     
-    addBalanceBtn.onclick = () => {
-        openModal(passwordModal);
-    };
+    addBalanceBtn.onclick = () => openModal(passwordModal);
 
     window.onload = () => {
+         
         setTimeout(() => { progress.style.width = '100%'; }, 200);
         setTimeout(() => {
             splash.style.opacity = '0';
@@ -638,8 +649,7 @@
         addLog(`Current Difficulty: ${currentDifficulty.name}`);
         checkBankrupt();
     }
-
-     
+ 
     function bindDifficultySwitch() {
         difficultyRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -658,6 +668,7 @@
         });
     }
 
+  
     function createPins() {
         pins.length = 0; 
         let maxPinY = 0;
@@ -691,7 +702,7 @@
         log.prepend(entry);
     }
 
-     
+ 
     function checkBankrupt() {
         if (balance < 1 && !isBankrupt) {
             isBankrupt = true;
@@ -703,6 +714,7 @@
         }
     }
 
+    
     dropButton.onclick = () => {
         if (isBankrupt) return;
         const bet = parseFloat(betInput.value);
@@ -725,10 +737,11 @@
         playSound(400, 'sine', 0.1, 0.08);
     };
 
+    
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-         
+     
         ctx.fillStyle = '#d2d2d7';
         pins.forEach(pin => {
             ctx.beginPath(); 
@@ -736,13 +749,13 @@
             ctx.fill();
         });
 
-        
+         
         const multipliers = currentDifficulty.multipliers;
         const multiplierBarTop = bottomPinY + 8; 
         const multiplierBarHeight = 25; 
         const multiplierBarBottom = multiplierBarTop + multiplierBarHeight;
 
-        let barStartX, barTotalWidth, bucketWidth;
+        let barStartX, barTotalWidth;
         if (currentDifficulty.name === "高难度") {
             barStartX = 0;
             barTotalWidth = canvas.width;
@@ -750,18 +763,18 @@
             barTotalWidth = maxPinRowWidth;
             barStartX = (canvas.width - barTotalWidth) / 2;
         }
-        bucketWidth = barTotalWidth / multipliers.length;
+        const adjustedBucketWidth = barTotalWidth / multipliers.length;
 
-         
+        
         multipliers.forEach((m, i) => {
-            const cellX = barStartX + i * bucketWidth;
+            const cellX = barStartX + i * adjustedBucketWidth;
             ctx.fillStyle = m >= 1 ? (m >= 5 ? '#1b5e20' : '#2e7d32') : '#d32f2f';
-            ctx.fillRect(cellX, multiplierBarTop, bucketWidth, multiplierBarHeight);
+            ctx.fillRect(cellX, multiplierBarTop, adjustedBucketWidth, multiplierBarHeight);
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`${m}X`, cellX + bucketWidth/2, multiplierBarTop + multiplierBarHeight/2);
+            ctx.fillText(`${m}X`, cellX + adjustedBucketWidth/2, multiplierBarTop + multiplierBarHeight/2);
             ctx.strokeStyle = '#ffffff30';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -770,12 +783,12 @@
             ctx.stroke();
         });
 
-        
+         
         ctx.strokeStyle = '#eee';
         ctx.lineWidth = 1;
         ctx.strokeRect(barStartX, multiplierBarTop, barTotalWidth, multiplierBarHeight);
 
-        
+         
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
             b.vy += currentDifficulty.gravity;
@@ -788,7 +801,7 @@
                 b.vx = maxVx * Math.sign(b.vx);
             }
 
-           
+      
             pins.forEach(pin => {
                 const dx = b.x - pin.x;
                 const dy = b.y - pin.y;
@@ -811,7 +824,7 @@
                 }
             });
 
-             
+           
             if (b.x < currentDifficulty.ballRadius) {
                 b.x = currentDifficulty.ballRadius;
                 b.vx = Math.abs(b.vx) * currentDifficulty.wallBounce;
@@ -820,17 +833,16 @@
                 b.vx = -Math.abs(b.vx) * currentDifficulty.wallBounce;
             }
 
-             
+            
             ctx.fillStyle = '#1d1d1f';
             ctx.beginPath(); 
             ctx.arc(b.x, b.y, currentDifficulty.ballRadius, 0, Math.PI * 2); 
             ctx.fill();
-
-            
+ 
             const ballBottom = b.y + currentDifficulty.ballRadius;
             if (ballBottom > multiplierBarBottom) {
                 const relativeX = b.x - barStartX;
-                let bucketIndex = Math.floor(relativeX / bucketWidth);
+                let bucketIndex = Math.floor(relativeX / adjustedBucketWidth);
                 bucketIndex = Math.min(Math.max(bucketIndex, 0), multipliers.length - 1);
                 const mult = multipliers[bucketIndex];
                 const win = b.bet * mult;
