@@ -10,9 +10,9 @@
 ![License](https://img.shields.io/badge/License-GPL_3.0-red?style=for-the-badge)
 
 <p align="center">
-  <strong>我們不追求利潤最大化，我們追求博弈公平性的技術極限</strong>
+  <strong>我們不追求利潤最大化，我們追求博弈公平性和趣味性的技術極限</strong>
   <br>
-  專注於在線老虎機研發、博弈概率論研究與大語言模型（LLM）動態交互應用
+  專注於在線或離綫博彩娛樂游戲程式研發、博弈概率論研究與大語言模型（LLM）動態交互應用
 </p>
 
 [ENGLISH](./README.md)
@@ -23,7 +23,7 @@
 
 ## 🏛️ 公司願景 (Company Vision)
 
-**Entertainment Games Soft (EGS)** 是一家私人非典型的博彩遊戲開發公司,我們認為博彩業的未來不在於抽水，而是在於**技術的透明度**與**純粹的概率美學**
+**Entertainment Games Soft (EGS)** 是一家未來將設立在澳門的私人非典型的博彩遊戲開發公司,我們認為博彩業的未來不在於抽水，而是在於**技術的透明度**與**純粹的概率美學**
 
 * **非營利導向**: 我們的目標是透過代碼研究博弈行為的本質
 * **全棧開源**: 從 RNG 隨機數生成器到後端引擎，所有代碼均在 GitHub 公開
@@ -37,7 +37,7 @@
 
 | 項目名稱 (Project) | 類型 (Category) | 技術亮點 (Highlights) | 狀態 (Status) |
 | :--- | :--- | :--- | :--- |
-| **🎰 EGS-Slots** | 線上老虎機 | 支援自定義 RTP 與波動率曲線 | [Production] |
+| **🎰 EGS-Games** | 綫上博彩游戲 | 純 HTML 開發，畫面簡潔高效，并且會輸出每次博彩數據，以供分析 | [Production] |
 | **🎲 EGS-Core-Engine** | 博彩後端 | 基於 WebSocket 的高併發投注引擎 | [Beta] |
 | **🧠 EGS-LLM-Guard** | AI 監控 | 使用大模型偵測異常投注與玩家行為分析 | [Research] |
 | **📊 Prob-Lab** | 概率實驗室 | 模擬數億次旋轉的概率分佈可視化工具 | [Active] |
@@ -86,6 +86,6 @@ $$P(G) = \frac{1}{\sum_{i=1}^{n} w_i}$$
 ---
 
 <div align="center">
-  <p><strong>⚠️ 免責聲明：本倉庫代碼僅供技術研究與學術交流</strong></p>
+  <p><strong>⚠️ 免責聲明：本倉庫代碼或游戲僅供技術研究與學術交流</strong></p>
   <p>請遵守當地法律法規，提倡負責任博彩，反對沉迷</p>
 </div>
