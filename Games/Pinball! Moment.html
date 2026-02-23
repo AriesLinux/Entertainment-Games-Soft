@@ -13,7 +13,102 @@
             --border: #d2d2d7;
             --loss: #d32f2f;
             --win: #2e7d32;
+            --mask: rgba(0, 0, 0, 0.5);
         }
+
+        
+        .modal-mask {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--mask);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 360px;
+            border: 1px solid var(--border);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 15px 0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .modal-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0 0 20px 0;
+            line-height: 1.4;
+        }
+
+        .modal-input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: var(--text);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm {
+            background: var(--text);
+            color: #fff;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+        /* ====================================================== */
 
         /* --- Splash Screen --- */
         #splash-screen {
@@ -91,7 +186,30 @@
             padding: 15px;
             border-radius: 12px;
             border: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+
+        
+        .add-balance-btn {
+            background: var(--text);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+        }
+        .add-balance-btn:hover { background: #333; transform: translateY(-1px); }
+        .add-balance-btn:active { transform: translateY(0); }
 
         input {
             background: #ffffff;
@@ -102,7 +220,7 @@
             font-size: 1rem;
         }
 
-        /* 难度选择样式 */
+        
         .difficulty-selector {
             display: flex;
             flex-direction: column;
@@ -186,6 +304,44 @@
 </head>
 <body>
 
+    
+    <div class="modal-mask" id="passwordModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Admin Verification</h3>
+            <p class="modal-desc">Enter admin password to add balance</p>
+            <input type="password" class="modal-input" id="passwordInput" placeholder="Enter password" maxlength="6">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="passwordCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="passwordConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+     
+    <div class="modal-mask" id="amountModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Add Balance</h3>
+            <p class="modal-desc">Enter the amount to add to your balance</p>
+            <input type="number" class="modal-input" id="amountInput" placeholder="Enter amount (HK$)" min="1" step="1">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="amountCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="amountConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+     
+    <div class="modal-mask" id="alertModal">
+        <div class="modal-card">
+            <h3 class="modal-title" id="alertTitle">Notice</h3>
+            <p class="modal-desc" id="alertContent"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" id="alertConfirmBtn">OK</button>
+            </div>
+        </div>
+    </div>
+    <!-- ====================================================== -->
+
     <div id="splash-screen">
         <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="EGS Logo">
         <div class="loading-bar">
@@ -203,21 +359,20 @@
 
         <div class="controls">
             <div class="stat-box">
-                <div style="font-size: 0.75rem; color: #888; font-weight: 600; margin-bottom: 5px;">CURRENT BALANCE</div>
-                <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #888; font-weight: 600; margin-bottom: 5px;">CURRENT BALANCE</div>
+                    <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
+                </div>
+                <button id="addBalanceBtn" class="add-balance-btn">+</button>
             </div>
 
-            <!-- 难度选择开关 -->
+             
             <div class="difficulty-selector">
                 <label class="difficulty-label">DIFFICULTY LEVEL</label>
                 <div class="difficulty-options">
                     <div class="difficulty-option">
-                        <input type="radio" name="difficulty" id="low" value="low">
+                        <input type="radio" name="difficulty" id="low" value="low" checked>
                         <label for="low">LOW</label>
-                    </div>
-                    <div class="difficulty-option">
-                        <input type="radio" name="difficulty" id="medium" value="medium" checked>
-                        <label for="medium">MEDIUM</label>
                     </div>
                     <div class="difficulty-option">
                         <input type="radio" name="difficulty" id="high" value="high">
@@ -235,6 +390,8 @@
 
             <div class="log" id="gameLog">
                 [SYSTEM]: Audio & Physics Engine Ready.<br>
+                [SYSTEM]: Optimized Multiplier Bar Loaded.<br>
+                [SYSTEM]: Local Storage Enabled.<br>
             </div>
             
             <div id="statsDisplay" style="font-size: 0.75rem; color: #aaa; text-align: center; letter-spacing: 1px;">SAMPLES COLLECTED: 0</div>
@@ -271,48 +428,36 @@
         setTimeout(() => playSound(100, 'sawtooth', 0.8, 0.1), 300);
     };
     const soundSwitchDifficulty = () => playSound(300, 'sine', 0.15, 0.05);
+    const soundSuccess = () => playSound(800, 'sine', 0.15, 0.08);
+    const soundError = () => playSound(200, 'square', 0.2, 0.05);
 
-    // --- 难度配置表 (已调整：增加行数、缩小间距) ---
+     
     const difficultyConfig = {
         low: {
             name: "低难度",
-            rows: 16,          // 增加行数
-            pinSpacing: 28,    // 缩小间距
+            rows: 16,
+            pinSpacing: 20,
             pinRadius: 3,
-            ballRadius: 6,
+            ballRadius: 5,
             gravity: 0.2,
-            bounceForce: 2.5,
-            horizontalDamping: 0.98,
-            wallBounce: 0.8,
-            randomOffset: 0.8,
-            multipliers: [3, 1.5, 1.2, 0.8, 0.6, 0.5, 0.6, 0.8, 1.2, 1.5, 3],
-            defaultBet: 10
-        },
-        medium: {
-            name: "中难度",
-            rows: 20,          // 增加行数
-            pinSpacing: 24,    // 缩小间距
-            pinRadius: 3.5,
-            ballRadius: 5.5,
-            gravity: 0.28,
-            bounceForce: 2.0,
+            bounceForce: 2.2,
             horizontalDamping: 0.96,
-            wallBounce: 0.5,
+            wallBounce: 0.6,
             randomOffset: 0.6,
-            multipliers: [5, 2, 1.2, 0.5, 0.3, 0.2, 0.3, 0.5, 1.2, 2, 5],
-            defaultBet: 30
+            multipliers: [3, 1.5, 1.1, 0.7, 0.5, 0.7, 1.1, 1.5, 3],
+            defaultBet: 10
         },
         high: {
             name: "高难度",
-            rows: 26,          // 增加行数
-            pinSpacing: 20,    // 缩小间距
+            rows: 26,
+            pinSpacing: 20,
             pinRadius: 3.8,
             ballRadius: 5,
             gravity: 0.35,
-            bounceForce: 1.7,
-            horizontalDamping: 0.93,
+            bounceForce: 1.5,
+            horizontalDamping: 0.92,
             wallBounce: 0.3,
-            randomOffset: 0.4,
+            randomOffset: 0.3,
             multipliers: [10, 3, 1.5, 0.8, 0.4, 0.2, 0.1, 0.2, 0.4, 0.8, 1.5, 3, 10],
             defaultBet: 50
         }
@@ -327,14 +472,150 @@
     const dropButton = document.getElementById('dropButton');
     const betInput = document.getElementById('betInput');
     const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+    const addBalanceBtn = document.getElementById('addBalanceBtn');
     
-    let currentDifficulty = difficultyConfig.medium;
+    let currentDifficulty = difficultyConfig.low;
     let balance = 0;
     let totalDrops = 0;
     let isBankrupt = false;
     const pins = [];
     let balls = [];
-    let bottomPinY = 0; 
+    let bottomPinY = 0;
+    let maxPinRowWidth = 0;
+
+     
+    const ADMIN_PASSWORD = '198297';
+     
+    const passwordModal = document.getElementById('passwordModal');
+    const amountModal = document.getElementById('amountModal');
+    const alertModal = document.getElementById('alertModal');
+     
+    const passwordInput = document.getElementById('passwordInput');
+    const amountInput = document.getElementById('amountInput');
+     
+    const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+    const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+    const amountCancelBtn = document.getElementById('amountCancelBtn');
+    const amountConfirmBtn = document.getElementById('amountConfirmBtn');
+    const alertConfirmBtn = document.getElementById('alertConfirmBtn');
+     
+    const alertTitle = document.getElementById('alertTitle');
+    const alertContent = document.getElementById('alertContent');
+
+     
+    function openModal(modal) {
+        modal.style.display = 'flex';
+         
+        const input = modal.querySelector('input');
+        if (input) {
+            setTimeout(() => input.focus(), 100);
+        }
+    }
+
+     
+    function closeModal(modal) {
+        modal.style.display = 'none';
+         
+        const input = modal.querySelector('input');
+        if (input) {
+            input.value = '';
+        }
+    }
+
+     
+    function showAlert(title, content) {
+        alertTitle.innerText = title;
+        alertContent.innerText = content;
+        openModal(alertModal);
+    }
+
+     
+    passwordConfirmBtn.onclick = () => {
+        const inputPwd = passwordInput.value.trim();
+        if (inputPwd !== ADMIN_PASSWORD) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Incorrect admin password.</span>");
+            closeModal(passwordModal);
+            showAlert("Access Denied", "Incorrect admin password!");
+            return;
+        }
+
+         
+        soundSuccess();
+        closeModal(passwordModal);
+        openModal(amountModal);
+    };
+
+    
+    amountConfirmBtn.onclick = () => {
+        const inputAmount = parseFloat(amountInput.value.trim());
+        if (isNaN(inputAmount) || inputAmount <= 0) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Invalid amount entered.</span>");
+            showAlert("Invalid Input", "Please enter a valid positive number!");
+            return;
+        }
+
+         
+        balance += inputAmount;
+        if (isBankrupt) {
+            isBankrupt = false;
+            dropButton.disabled = false;
+            betInput.disabled = false;
+        }
+        saveToStorage();
+        updateUI();
+        soundSuccess();
+        addLog(`<span style='color:#2e7d32; font-weight:700;'>SUCCESS: Added HK$${inputAmount.toLocaleString(undefined, {minimumFractionDigits: 2})} to balance.</span>`);
+        closeModal(amountModal);
+    };
+
+    
+    passwordCancelBtn.onclick = () => closeModal(passwordModal);
+    amountCancelBtn.onclick = () => closeModal(amountModal);
+    alertConfirmBtn.onclick = () => closeModal(alertModal);
+
+     
+    passwordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') passwordConfirmBtn.click();
+    });
+    amountInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') amountConfirmBtn.click();
+    });
+    alertContent.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') alertConfirmBtn.click();
+    });
+
+     
+    [passwordModal, amountModal, alertModal].forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal(modal);
+            }
+        });
+    });
+    // ======================================================
+
+     
+    const STORAGE_KEY_BALANCE = 'pinball_moment_balance';
+    const STORAGE_KEY_SAMPLES = 'pinball_moment_samples';
+
+    function loadFromStorage() {
+        const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
+        const savedSamples = localStorage.getItem(STORAGE_KEY_SAMPLES);
+        balance = savedBalance ? parseFloat(savedBalance) : 500;
+        totalDrops = savedSamples ? parseInt(savedSamples) : 0;
+    }
+
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEY_BALANCE, balance.toFixed(2));
+        localStorage.setItem(STORAGE_KEY_SAMPLES, totalDrops.toString());
+    }
+
+     
+    addBalanceBtn.onclick = () => {
+        openModal(passwordModal);
+    };
 
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
@@ -349,17 +630,16 @@
     };
 
     function initGame() {
-        const initial = prompt("PINBALL! MOMENT RESEARCH\nEnter simulation balance (HK$):", "500");
-        balance = parseFloat(initial) || 500;
+        loadFromStorage();
         updateUI();
         createPins();
         animate();
-        addLog(`System initialized. Starting Capital: HK$${balance.toLocaleString()}`);
+        addLog(`System initialized. Loaded balance from storage.`);
         addLog(`Current Difficulty: ${currentDifficulty.name}`);
         checkBankrupt();
     }
 
-    // 绑定难度切换事件
+     
     function bindDifficultySwitch() {
         difficultyRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
@@ -378,17 +658,16 @@
         });
     }
 
-    // 重写钉子生成函数，调整起始位置以适应更密集的布局
     function createPins() {
         pins.length = 0; 
         let maxPinY = 0;
-        // 从第 1 行开始生成（原来是第 2 行），增加顶部钉子
-        for (let i = 1; i < currentDifficulty.rows; i++) {
+        let maxRowWidth = 0;
+        for (let i = 2; i < currentDifficulty.rows; i++) {
             const rowWidth = i * currentDifficulty.pinSpacing;
             const startX = (canvas.width - rowWidth) / 2 + currentDifficulty.pinSpacing/2;
+            if (rowWidth > maxRowWidth) maxRowWidth = rowWidth;
             for (let j = 0; j < i; j++) {
-                // 调整起始 Y 坐标，从 60 开始（原来是 80）
-                const pinY = 60 + i * currentDifficulty.pinSpacing;
+                const pinY = (60 - currentDifficulty.pinSpacing) + i * currentDifficulty.pinSpacing;
                 pins.push({ 
                     x: startX + j * currentDifficulty.pinSpacing, 
                     y: pinY
@@ -397,6 +676,7 @@
             }
         }
         bottomPinY = maxPinY + currentDifficulty.pinRadius;
+        maxPinRowWidth = maxRowWidth;
     }
 
     function updateUI() {
@@ -411,7 +691,7 @@
         log.prepend(entry);
     }
 
-    // 破产检测机制
+     
     function checkBankrupt() {
         if (balance < 1 && !isBankrupt) {
             isBankrupt = true;
@@ -419,7 +699,7 @@
             betInput.disabled = true;
             soundBankrupt();
             addLog("<span style='color:#d32f2f; font-weight:700;'>BANKRUPT! You have lost all your funds.</span>");
-            alert("BANKRUPT!\nYou have no remaining balance to continue playing.\nSwitch difficulty to reset.");
+            showAlert("BANKRUPT!", "You have no remaining balance to continue playing.\nSwitch difficulty or click '+' to add balance.");
         }
     }
 
@@ -432,6 +712,7 @@
         }
         balance -= bet;
         totalDrops++;
+        saveToStorage();
         updateUI();
         const initOffset = currentDifficulty.name === "高难度" ? 0.5 : 1;
         balls.push({ 
@@ -447,7 +728,7 @@
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // 绘制钉子
+         
         ctx.fillStyle = '#d2d2d7';
         pins.forEach(pin => {
             ctx.beginPath(); 
@@ -455,39 +736,46 @@
             ctx.fill();
         });
 
-        // 绘制倍率条（紧贴最底部钉子）
+        
         const multipliers = currentDifficulty.multipliers;
-        const bucketWidth = canvas.width / multipliers.length;
         const multiplierBarTop = bottomPinY + 8; 
         const multiplierBarHeight = 25; 
         const multiplierBarBottom = multiplierBarTop + multiplierBarHeight;
 
-        // 绘制每个倍率格子
+        let barStartX, barTotalWidth, bucketWidth;
+        if (currentDifficulty.name === "高难度") {
+            barStartX = 0;
+            barTotalWidth = canvas.width;
+        } else {
+            barTotalWidth = maxPinRowWidth;
+            barStartX = (canvas.width - barTotalWidth) / 2;
+        }
+        bucketWidth = barTotalWidth / multipliers.length;
+
+         
         multipliers.forEach((m, i) => {
+            const cellX = barStartX + i * bucketWidth;
             ctx.fillStyle = m >= 1 ? (m >= 5 ? '#1b5e20' : '#2e7d32') : '#d32f2f';
+            ctx.fillRect(cellX, multiplierBarTop, bucketWidth, multiplierBarHeight);
+            ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(`${m}X`, i * bucketWidth + bucketWidth/2, multiplierBarTop + multiplierBarHeight/2);
-            ctx.strokeStyle = '#eee';
+            ctx.fillText(`${m}X`, cellX + bucketWidth/2, multiplierBarTop + multiplierBarHeight/2);
+            ctx.strokeStyle = '#ffffff30';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(i * bucketWidth, multiplierBarTop);
-            ctx.lineTo(i * bucketWidth, multiplierBarBottom);
+            ctx.moveTo(cellX, multiplierBarTop);
+            ctx.lineTo(cellX, multiplierBarBottom);
             ctx.stroke();
         });
 
-        // 绘制倍率条上下边框
+        
         ctx.strokeStyle = '#eee';
         ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(0, multiplierBarTop);
-        ctx.lineTo(canvas.width, multiplierBarTop);
-        ctx.moveTo(0, multiplierBarBottom);
-        ctx.lineTo(canvas.width, multiplierBarBottom);
-        ctx.stroke();
+        ctx.strokeRect(barStartX, multiplierBarTop, barTotalWidth, multiplierBarHeight);
 
-        // 弹珠物理逻辑
+        
         for (let i = balls.length - 1; i >= 0; i--) {
             const b = balls[i];
             b.vy += currentDifficulty.gravity;
@@ -495,7 +783,12 @@
             b.y += b.vy;
             b.vx *= currentDifficulty.horizontalDamping;
 
-            // 钉子碰撞逻辑
+            const maxVx = 5; 
+            if (Math.abs(b.vx) > maxVx) {
+                b.vx = maxVx * Math.sign(b.vx);
+            }
+
+           
             pins.forEach(pin => {
                 const dx = b.x - pin.x;
                 const dy = b.y - pin.y;
@@ -505,31 +798,44 @@
                     const angle = Math.atan2(dy, dx);
                     const force = currentDifficulty.bounceForce;
                     const randomOffset = currentDifficulty.randomOffset;
-                    b.vx += Math.cos(angle) * force + (Math.random() * randomOffset - randomOffset/2);
-                    b.vy = Math.abs(Math.sin(angle) * force) + 1;
-                    b.y = pin.y + (currentDifficulty.ballRadius + currentDifficulty.pinRadius + 1) * Math.sin(angle);
+                    
+                    let newVx = Math.cos(angle) * force + (Math.random() * randomOffset - randomOffset/2);
+                    let newVy = Math.abs(Math.sin(angle) * force) + 1;
+
+                    b.vx = newVx;
+                    b.vy = newVy;
+                    
+                    const overlap = (currentDifficulty.ballRadius + currentDifficulty.pinRadius) - dist;
+                    b.x += Math.cos(angle) * overlap;
+                    b.y += Math.sin(angle) * overlap;
                 }
             });
 
-            // 左右边界碰撞
-            if (b.x < currentDifficulty.ballRadius || b.x > canvas.width - currentDifficulty.ballRadius) {
-                b.vx *= -currentDifficulty.wallBounce;
-                b.x = b.x < currentDifficulty.ballRadius ? currentDifficulty.ballRadius : canvas.width - currentDifficulty.ballRadius;
+             
+            if (b.x < currentDifficulty.ballRadius) {
+                b.x = currentDifficulty.ballRadius;
+                b.vx = Math.abs(b.vx) * currentDifficulty.wallBounce;
+            } else if (b.x > canvas.width - currentDifficulty.ballRadius) {
+                b.x = canvas.width - currentDifficulty.ballRadius;
+                b.vx = -Math.abs(b.vx) * currentDifficulty.wallBounce;
             }
 
-            // 绘制弹珠
+             
             ctx.fillStyle = '#1d1d1f';
             ctx.beginPath(); 
             ctx.arc(b.x, b.y, currentDifficulty.ballRadius, 0, Math.PI * 2); 
             ctx.fill();
 
-            // 弹珠结算逻辑
+            
             const ballBottom = b.y + currentDifficulty.ballRadius;
             if (ballBottom > multiplierBarBottom) {
-                const bucketIndex = Math.floor(b.x / bucketWidth);
-                const mult = multipliers[Math.min(Math.max(bucketIndex, 0), multipliers.length - 1)] || 0;
+                const relativeX = b.x - barStartX;
+                let bucketIndex = Math.floor(relativeX / bucketWidth);
+                bucketIndex = Math.min(Math.max(bucketIndex, 0), multipliers.length - 1);
+                const mult = multipliers[bucketIndex];
                 const win = b.bet * mult;
                 balance += win;
+                saveToStorage();
                 
                 if (mult >= 1) soundWin(); else soundLoss();
 
