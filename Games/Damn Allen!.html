@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Damn Allen! | EGS Research</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --primary: #2e7d32;
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
+            --loss: #d32f2f;
+            --win: #2e7d32;
+            --allen: #7b1fa2;
+            --mask: rgba(0, 0, 0, 0.6);
+        }
+
+        
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--mask);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: var(--card);
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 360px;
+            border: 1px solid var(--border);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .modal-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0 0 18px 0;
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            width: 100%;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.85rem;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: var(--text);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm {
+            background: var(--text);
+            color: #fff;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease;
+        }
+
+        #splash-screen img {
+            width: 400px;
+            height: auto;
+            margin-bottom: 25px;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-bar {
+            width: 180px;
+            height: 3px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: #000;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+       
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 30px;
+            border: 1px solid var(--border);
+            max-width: 1100px;
+            width: 100%;
+        }
+
+     
+        .card-grid-wrapper {
+            flex: 1;
+            min-width: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            background: #f9f9fb;
+            border-radius: 16px;
+            border: 1px solid #eee;
+        }
+
+     
+        .card-grid {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+            max-width: 480px;
+        }
+        .card-grid.easy { grid-template-columns: repeat(5, 1fr); }
+        .card-grid.medium { grid-template-columns: repeat(4, 1fr); }
+        .card-grid.hard { grid-template-columns: repeat(6, 1fr); }
+
+        
+        .card-item {
+            aspect-ratio: 3/4;
+            position: relative;
+            cursor: pointer;
+            perspective: 1000px;
+        }
+        .card-item.disabled { cursor: not-allowed; }
+        .card-item.flipped { pointer-events: none; }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 10px;
+        }
+        .card-item.flipped .card-inner { transform: rotateY(180deg); }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+        }
+
+     
+        .card-back {
+            background: var(--text);
+            color: #fff;
+            border: 3px solid #333;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        
+        .card-front {
+            background: #fff;
+            border: 3px solid var(--border);
+            transform: rotateY(180deg);
+        }
+        .card-front.safe {
+            background: var(--win);
+            border-color: var(--win);
+            color: #fff;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+        }
+        .card-front.bomb {
+            background: var(--allen);
+            border-color: var(--allen);
+            color: #fff;
+            font-size: 0.8rem;
+            text-align: center;
+            line-height: 1.3;
+            text-transform: uppercase;
+        }
+
+       
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            min-width: 280px;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        h2 { 
+            margin: 0; 
+            color: var(--text); 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            letter-spacing: -1.5px;
+            text-transform: uppercase;
+        }
+        
+        .stat-box {
+            background: #f9f9fb;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+       
+        .add-balance-btn {
+            background: var(--text);
+            color: #fff;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+            z-index: 10;
+        }
+        .add-balance-btn:hover { background: #333; transform: translateY(-1px); }
+        .add-balance-btn:active { transform: translateY(0); }
+
+        input {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        
+        .difficulty-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .difficulty-label {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .difficulty-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .difficulty-option {
+            position: relative;
+        }
+        .difficulty-option input {
+            position: absolute;
+            opacity: 0;
+        }
+        .difficulty-option label {
+            display: block;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+        }
+        .difficulty-option input:checked + label {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+        }
+        .difficulty-option label:hover {
+            transform: translateY(-1px);
+        }
+
+       
+        .game-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .stat-item {
+            background: #f9f9fb;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.65rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .stat-value.multiplier {
+            color: var(--allen);
+        }
+
+        button {
+            background: var(--text);
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        button:hover { background: #333; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+        button.cashout { background: var(--win); }
+        button.cashout:hover { background: #1b5e20; }
+        button.cashout:disabled { background: #aaa; }
+
+        .log {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.7rem;
+            height: 120px;
+            overflow-y: auto;
+            background: #f9f9fb;
+            padding: 10px;
+            border-radius: 8px;
+            color: #444;
+            border: 1px solid #eee;
+            line-height: 1.4;
+        }
+
+        .header { text-align: center; margin-bottom: 20px; }
+
+        .rule-desc {
+            background: #f9f9fb;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            font-size: 0.7rem;
+            color: #666;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+  
+    <div class="modal-mask" id="passwordModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Admin Verification</h3>
+            <p class="modal-desc">Enter admin password to add balance</p>
+            <input type="password" class="modal-input" id="passwordInput" placeholder="Enter password" maxlength="6">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="passwordCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="passwordConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+ 
+    <div class="modal-mask" id="amountModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Add Balance</h3>
+            <p class="modal-desc">Enter the amount to add to your balance</p>
+            <input type="number" class="modal-input" id="amountInput" placeholder="Enter amount (HK$)" min="1" step="1">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="amountCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="amountConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+   
+    <div class="modal-mask" id="alertModal">
+        <div class="modal-card">
+            <h3 class="modal-title" id="alertTitle">Notice</h3>
+            <p class="modal-desc" id="alertContent"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" id="alertConfirmBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="splash-screen">
+        <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="EGS Logo">
+        <div class="loading-bar">
+            <div class="loading-progress" id="load-progress"></div>
+        </div>
+    </div>
+
+ 
+    <div class="header">
+        <h2>Damn Allen!</h2>
+        <div style="color: #888; font-size: 0.8rem; margin-top: 4px; font-weight: 500;">ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
+    </div>
+
+     
+    <div class="container">
+     
+        <div class="card-grid-wrapper">
+            <div id="cardGrid" class="card-grid easy"></div>
+        </div>
+
+        
+        <div class="controls">
+            <div class="stat-box">
+                <div>
+                    <div style="font-size: 0.7rem; color: #888; font-weight: 600; margin-bottom: 4px;">CURRENT BALANCE</div>
+                    <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
+                </div>
+                <button id="addBalanceBtn" class="add-balance-btn">+</button>
+            </div>
+
+           
+            <div class="game-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Current Multiplier</div>
+                    <div class="stat-value multiplier" id="multiplierDisplay">1.0x</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Cards Flipped</div>
+                    <div class="stat-value" id="cardCountDisplay">0</div>
+                </div>
+            </div>
+
+            
+            <div class="difficulty-selector">
+                <label class="difficulty-label">DIFFICULTY LEVEL</label>
+                <div class="difficulty-options">
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="easy" value="easy" checked>
+                        <label for="easy">
+                            <span>EASY</span>
+                            <span>MAX 3X</span>
+                        </label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="medium" value="medium">
+                        <label for="medium">
+                            <span>MEDIUM</span>
+                            <span>MAX 10X</span>
+                        </label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="hard" value="hard">
+                        <label for="hard">
+                            <span>HARD</span>
+                            <span>MAX 30X</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+         
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 0.75rem; color: #666; font-weight: 600;">STAKE AMOUNT</label>
+                <input type="number" id="betInput" value="50" min="1" step="1">
+            </div>
+
+          
+            <button id="startBtn">Start Game</button>
+            <button id="cashoutBtn" class="cashout" disabled>Cash Out</button>
+            <button id="resetBtn" disabled>Reset Game</button>
+
+           
+            <div class="rule-desc">
+                <strong>Rules:</strong><br>
+                • Flip safe cards: multiplier increases<br>
+                • Hit Allen Bomb: lose all stake<br>
+                • Cash out anytime to lock winnings<br>
+                • Max multiplier: auto cash out
+            </div>
+
+         
+            <div class="log" id="gameLog">
+                [SYSTEM]: Game Engine Ready.<br>
+                [SYSTEM]: Local Storage Enabled.<br>
+            </div>
+        </div>
+    </div>
+
+<script>
+   
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, type, duration, vol = 0.1) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    
+    const soundFlip = () => playSound(440, 'sine', 0.1, 0.03);
+    const soundSafe = () => playSound(600, 'triangle', 0.15, 0.05);
+    const soundBomb = () => {
+        playSound(200, 'sawtooth', 0.2, 0.08);
+        setTimeout(() => playSound(100, 'sawtooth', 0.3, 0.08), 150);
+    };
+    const soundCashout = () => {
+        playSound(523.25, 'sine', 0.2, 0.08);
+        setTimeout(() => playSound(659.25, 'sine', 0.2, 0.08), 100);
+        setTimeout(() => playSound(783.99, 'sine', 0.3, 0.08), 200);
+    };
+    const soundStart = () => playSound(400, 'sine', 0.1, 0.05);
+    const soundSuccess = () => playSound(800, 'sine', 0.15, 0.08);
+    const soundError = () => playSound(200, 'square', 0.2, 0.05);
+    const soundSwitch = () => playSound(300, 'sine', 0.15, 0.05);
+
+     
+    const difficultyConfig = {
+        easy: {
+            name: "EASY",
+            totalCards: 10,
+            bombCount: 3,
+            maxMultiplier: 3,
+            gridClass: "easy"
+        },
+        medium: {
+            name: "MEDIUM",
+            totalCards: 16,
+            bombCount: 5,
+            maxMultiplier: 10,
+            gridClass: "medium"
+        },
+        hard: {
+            name: "HARD",
+            totalCards: 24,
+            bombCount: 10,
+            maxMultiplier: 30,
+            gridClass: "hard"
+        }
+    };
+
+   
+    const STORAGE_KEY_BALANCE = 'egs_game_balance';
+    const STORAGE_KEY_GAMES = 'damn_allen_total_games';
+    const ADMIN_PASSWORD = '198297';
+
+    let balance = 0;
+    let totalGames = 0;
+    let isPlaying = false;
+    let currentDifficulty = difficultyConfig.easy;
+    let currentBet = 0;
+    let currentMultiplier = 1;
+    let flippedCount = 0;
+    let safeFlippedCount = 0;
+    let multiplierStep = 0;
+    let cardList = [];
+
+  
+    const cardGrid = document.getElementById('cardGrid');
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const multiplierDisplay = document.getElementById('multiplierDisplay');
+    const cardCountDisplay = document.getElementById('cardCountDisplay');
+    const betInput = document.getElementById('betInput');
+    const startBtn = document.getElementById('startBtn');
+    const cashoutBtn = document.getElementById('cashoutBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const addBalanceBtn = document.getElementById('addBalanceBtn');
+    const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+    const gameLog = document.getElementById('gameLog');
+    const splash = document.getElementById('splash-screen');
+    const progress = document.getElementById('load-progress');
+
+ 
+    const passwordModal = document.getElementById('passwordModal');
+    const amountModal = document.getElementById('amountModal');
+    const alertModal = document.getElementById('alertModal');
+    const passwordInput = document.getElementById('passwordInput');
+    const amountInput = document.getElementById('amountInput');
+    const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+    const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+    const amountCancelBtn = document.getElementById('amountCancelBtn');
+    const amountConfirmBtn = document.getElementById('amountConfirmBtn');
+    const alertConfirmBtn = document.getElementById('alertConfirmBtn');
+    const alertTitle = document.getElementById('alertTitle');
+    const alertContent = document.getElementById('alertContent');
+
+    function openModal(modal) {
+        modal.style.display = 'flex';
+        const input = modal.querySelector('input');
+        if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeModal(modal) {
+        modal.style.display = 'none';
+        const input = modal.querySelector('input');
+        if (input) input.value = '';
+    }
+
+    function showAlert(title, content) {
+        alertTitle.innerText = title;
+        alertContent.innerText = content;
+        openModal(alertModal);
+    }
+
+ 
+    passwordConfirmBtn.onclick = () => {
+        const inputPwd = passwordInput.value.trim();
+        if (inputPwd !== ADMIN_PASSWORD) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Incorrect admin password.</span>");
+            closeModal(passwordModal);
+            showAlert("Access Denied", "Incorrect admin password!");
+            return;
+        }
+        soundSuccess();
+        closeModal(passwordModal);
+        openModal(amountModal);
+    };
+
+     
+    amountConfirmBtn.onclick = () => {
+        const inputAmount = parseFloat(amountInput.value.trim());
+       
+        if (isNaN(inputAmount) || inputAmount <= 0 || !isFinite(inputAmount)) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Invalid amount entered.</span>");
+            showAlert("Invalid Input", "Please enter a valid positive number!");
+            return;
+        }
+        balance += inputAmount;
+        balance = roundNumber(balance, 2);  
+        saveToStorage();
+        updateUI();
+        soundSuccess();
+        addLog(`<span style='color:#2e7d32; font-weight:700;'>SUCCESS: Added HK$${inputAmount.toLocaleString(undefined, {minimumFractionDigits: 2})} to balance.</span>`);
+        closeModal(amountModal);
+    };
+
+     
+    passwordCancelBtn.onclick = () => closeModal(passwordModal);
+    amountCancelBtn.onclick = () => closeModal(amountModal);
+    alertConfirmBtn.onclick = () => closeModal(alertModal);
+    [passwordInput, amountInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') e.target.closest('.modal-card').querySelector('.modal-btn-confirm').click();
+        });
+    });
+    [passwordModal, amountModal, alertModal].forEach(modal => {
+        modal.addEventListener('click', (e) => e.target === modal && closeModal(modal));
+    });
+    addBalanceBtn.onclick = () => openModal(passwordModal);
+
+     
+    function roundNumber(num, decimal) {
+        return Math.round(num * Math.pow(10, decimal)) / Math.pow(10, decimal);
+    }
+
+    
+    function safeParseNumber(str, defaultValue = 0) {
+        const num = parseFloat(str);
+        return (isNaN(num) || !isFinite(num)) ? defaultValue : num;
+    }
+
+   
+    function loadFromStorage() {
+        const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
+        const savedGames = localStorage.getItem(STORAGE_KEY_GAMES);
+         
+        balance = safeParseNumber(savedBalance, 0);
+        totalGames = safeParseNumber(savedGames, 0);
+         
+        balance = roundNumber(balance, 2);
+    }
+
+    function saveToStorage() {
+        
+        const safeBalance = isNaN(balance) || !isFinite(balance) ? 0 : roundNumber(balance, 2);
+        localStorage.setItem(STORAGE_KEY_BALANCE, safeBalance.toFixed(2));
+        localStorage.setItem(STORAGE_KEY_GAMES, Math.floor(totalGames).toString());
+    }
+
+ 
+    function updateUI() {
+        
+        if (isNaN(balance) || !isFinite(balance)) balance = 0;
+        const displayBalance = roundNumber(balance, 2);
+        balanceDisplay.innerText = `HK$${displayBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        const displayMultiplier = roundNumber(currentMultiplier, 1);
+        multiplierDisplay.innerText = `${displayMultiplier}x`;
+        cardCountDisplay.innerText = flippedCount;
+    }
+
+    function addLog(msg) {
+        const entry = document.createElement('div');
+        entry.style.marginBottom = "4px";
+        entry.innerHTML = `<span style="color: #bbb;">#</span> ${msg}`;
+        gameLog.prepend(entry);
+        gameLog.scrollTop = 0;
+    }
+
+ 
+    function calcMultiplierStep() {
+        const totalSafe = currentDifficulty.totalCards - currentDifficulty.bombCount;
+        const multiplierRange = currentDifficulty.maxMultiplier - 1;
+        return multiplierRange / totalSafe;
+    }
+
+    function generateCards() {
+        cardList = [];
+        const { totalCards, bombCount } = currentDifficulty;
+        
+        const bombArray = new Array(bombCount).fill('bomb');
+        const safeArray = new Array(totalCards - bombCount).fill('safe');
+        const allCards = [...bombArray, ...safeArray];
+        
+        allCards.sort(() => Math.random() - 0.5);
+        
+        allCards.forEach((type, index) => {
+            cardList.push({
+                id: index,
+                type: type,
+                flipped: false
+            });
+        });
+
+        multiplierStep = calcMultiplierStep();
+    }
+
+    function renderCards() {
+        cardGrid.innerHTML = '';
+        cardGrid.className = `card-grid ${currentDifficulty.gridClass}`;
+
+        cardList.forEach(card => {
+            const cardItem = document.createElement('div');
+            cardItem.className = `card-item ${card.flipped ? 'flipped' : ''} ${!isPlaying ? 'disabled' : ''}`;
+            cardItem.dataset.id = card.id;
+
+            let frontContent = card.type === 'safe' ? 'SAFE' : 'ALLEN<br>BOMB';
+
+            cardItem.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-back">ALLEN</div>
+                    <div class="card-front ${card.type}">
+                        ${frontContent}
+                    </div>
+                </div>
+            `;
+
+            cardItem.addEventListener('click', () => {
+                if (!isPlaying || card.flipped) return;
+                flipCard(card.id);
+            });
+
+            cardGrid.appendChild(cardItem);
+        });
+    }
+
+    function flipAllCards() {
+        cardList.forEach(card => {
+            card.flipped = true;
+        });
+        renderCards();
+    }
+
+    function flipCard(cardId) {
+        const card = cardList.find(item => item.id === cardId);
+        if (!card || card.flipped) return;
+
+        card.flipped = true;
+        flippedCount++;
+        soundFlip();
+        renderCards();
+
+    
+        if (card.type === 'bomb') {
+            soundBomb();
+            flipAllCards();
+            addLog(`<span style='color:#d32f2f; font-weight:700;'>HIT ALLEN BOMB! Game Over. Lost HK$${roundNumber(currentBet, 2).toFixed(2)}</span>`);
+            showAlert("GAME OVER!", "You hit the Allen Bomb!\nYou lost your entire stake.");
+            endGame(false);
+            return;
+        }
+
+        
+        if (card.type === 'safe') {
+            safeFlippedCount++;
+            currentMultiplier = 1 + (safeFlippedCount * multiplierStep);
+            currentMultiplier = roundNumber(currentMultiplier, 1);
+            soundSafe();
+            addLog(`Safe card flipped! Multiplier → ${currentMultiplier}x`);
+            updateUI();
+
+        
+            if (currentMultiplier >= currentDifficulty.maxMultiplier) {
+                currentMultiplier = currentDifficulty.maxMultiplier;
+                addLog(`<span style='color:#2e7d32; font-weight:700;'>MAX MULTIPLIER REACHED! Auto cash out.</span>`);
+                cashout();
+                return;
+            }
+
+            
+            const totalSafe = currentDifficulty.totalCards - currentDifficulty.bombCount;
+            if (safeFlippedCount >= totalSafe) {
+                addLog(`<span style='color:#2e7d32; font-weight:700;'>All safe cards flipped! Auto cash out.</span>`);
+                cashout();
+            }
+        }
+    }
+
+    function cashout() {
+        if (!isPlaying) return;
+        const finalMultiplier = roundNumber(currentMultiplier, 1);
+        const winAmount = roundNumber(currentBet * finalMultiplier, 2);
+        balance += winAmount;
+        balance = roundNumber(balance, 2);
+        soundCashout();
+        addLog(`<span style='color:#2e7d32; font-weight:700;'>CASH OUT SUCCESS! Won HK$${winAmount.toFixed(2)} (${finalMultiplier}x)</span>`);
+        showAlert("SUCCESS!", `You cashed out HK$${winAmount.toFixed(2)}!\nFinal Multiplier: ${finalMultiplier}x`);
+        endGame(true);
+    }
+
+    
+    startBtn.onclick = () => {
+        const bet = safeParseNumber(betInput.value, 0);
+        if (bet > balance || bet <= 0) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Insufficient Funds.</span>");
+            showAlert("Error", "Insufficient balance to start game!");
+            return;
+        }
+
+         
+        currentBet = bet;
+        balance -= bet;
+        balance = roundNumber(balance, 2);
+        currentMultiplier = 1;
+        flippedCount = 0;
+        safeFlippedCount = 0;
+        isPlaying = true;
+        totalGames++;
+
+        saveToStorage();
+        updateUI();
+        generateCards();
+        renderCards();
+
+        
+        startBtn.disabled = true;
+        cashoutBtn.disabled = false;
+        resetBtn.disabled = false;
+        betInput.disabled = true;
+        difficultyRadios.forEach(radio => radio.disabled = true);
+
+        addLog(`<span style='font-weight:700;'>GAME STARTED</span> | Difficulty: ${currentDifficulty.name} | Stake: HK$${bet.toFixed(2)}`);
+        soundStart();
+    };
+
+    cashoutBtn.onclick = cashout;
+
+    resetBtn.onclick = () => {
+        isPlaying = false;
+        currentBet = 0;
+        currentMultiplier = 1;
+        flippedCount = 0;
+        safeFlippedCount = 0;
+
+        generateCards();
+        renderCards();
+        updateUI();
+
+        startBtn.disabled = false;
+        cashoutBtn.disabled = true;
+        resetBtn.disabled = true;
+        betInput.disabled = false;
+        difficultyRadios.forEach(radio => radio.disabled = false);
+
+        addLog(`<span style='font-weight:700;'>GAME RESET</span>`);
+    };
+
+    function endGame(isWin) {
+        isPlaying = false;
+        saveToStorage();
+        updateUI();
+
+        startBtn.disabled = false;
+        cashoutBtn.disabled = true;
+        resetBtn.disabled = true;
+        betInput.disabled = false;
+        difficultyRadios.forEach(radio => radio.disabled = false);
+    }
+
+    difficultyRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            currentDifficulty = difficultyConfig[e.target.value];
+            generateCards();
+            renderCards();
+            soundSwitch();
+            addLog(`Difficulty switched to: <span style="font-weight:700">${currentDifficulty.name}</span>`);
+        });
+    });
+
+ 
+    window.onload = () => {
+        setTimeout(() => { progress.style.width = '100%'; }, 200);
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.visibility = 'hidden';
+                loadFromStorage();
+                updateUI();
+                generateCards();
+                renderCards();
+                addLog(`System initialized. Loaded balance from storage.`);
+            }, 1000);
+        }, 2800);
+    };
+</script>
+</body>
+</html>
