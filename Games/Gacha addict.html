@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gacha addict | EGS Research</title>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
+            --loss: #d32f2f;
+            --win: #2e7d32;
+            --black: #1d1d1f;
+            --white: #ffffff;
+            --gold: #ffb300;
+            --red: #d32f2f;
+            --mask: rgba(0, 0, 0, 0.5);
+        }
+
+     
+        .modal-mask {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--mask);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            width: 90%;
+            max-width: 360px;
+            border: 1px solid var(--border);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 15px 0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .modal-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0 0 20px 0;
+            line-height: 1.4;
+        }
+
+        .modal-input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: var(--text);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm {
+            background: var(--text);
+            color: #fff;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+  
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease;
+        }
+
+        #splash-screen img {
+            width: 450px;
+            height: auto;
+            margin-bottom: 30px;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-bar {
+            width: 200px; height: 3px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 0%; height: 100%;
+            background: #000;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+     
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0; padding: 20px;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex; gap: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .controls { display: flex; flex-direction: column; gap: 20px; min-width: 280px; }
+        
+        h2 { 
+            margin: 0; 
+            color: var(--text); 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            letter-spacing: -1.5px;
+            text-transform: uppercase;
+        }
+        
+        .stat-box {
+            background: #f9f9fb;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+     
+        .add-balance-btn {
+            background: var(--text);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+            z-index: 10;
+        }
+        .add-balance-btn:hover { background: #333; transform: translateY(-1px); }
+        .add-balance-btn:active { transform: translateY(0); }
+
+        input {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+       
+        .color-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .color-label {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 600;
+        }
+        .color-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .color-option {
+            flex: 1;
+            min-width: 50px;
+            position: relative;
+        }
+        .color-option input {
+            position: absolute;
+            opacity: 0;
+        }
+        .color-option label {
+            display: block;
+            text-align: center;
+            padding: 10px 0;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            text-transform: uppercase;
+        }
+  
+        .color-option input:checked + label[for="black"] {
+            background: var(--black);
+            color: #fff;
+            border-color: var(--black);
+        }
+        .color-option input:checked + label[for="white"] {
+            background: var(--white);
+            color: var(--text);
+            border-color: var(--text);
+        }
+        .color-option input:checked + label[for="gold"] {
+            background: var(--gold);
+            color: #fff;
+            border-color: var(--gold);
+        }
+        .color-option input:checked + label[for="red"] {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--red);
+        }
+        .color-option label:hover {
+            transform: translateY(-1px);
+        }
+
+        button {
+            background: var(--text);
+            color: #ffffff;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        button:hover { background: #333; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+
+        canvas {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+
+        .log {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.8rem;
+            height: 180px;
+            overflow-y: auto;
+            background: #f9f9fb;
+            padding: 12px;
+            border-radius: 8px;
+            color: #444;
+            border: 1px solid #eee;
+            line-height: 1.5;
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+ 
+        .multiplier-desc {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: #f9f9fb;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .multiplier-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .multiplier-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    
+    <div class="modal-mask" id="passwordModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Admin Verification</h3>
+            <p class="modal-desc">Enter admin password to add balance</p>
+            <input type="password" class="modal-input" id="passwordInput" placeholder="Enter password" maxlength="6">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="passwordCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="passwordConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-mask" id="amountModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Add Balance</h3>
+            <p class="modal-desc">Enter the amount to add to your balance</p>
+            <input type="number" class="modal-input" id="amountInput" placeholder="Enter amount (HK$)" min="1" step="1">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="amountCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="amountConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-mask" id="alertModal">
+        <div class="modal-card">
+            <h3 class="modal-title" id="alertTitle">Notice</h3>
+            <p class="modal-desc" id="alertContent"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" id="alertConfirmBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="splash-screen">
+        <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="EGS Logo">
+        <div class="loading-bar">
+            <div class="loading-progress" id="load-progress"></div>
+        </div>
+    </div>
+
+    
+    <div class="header">
+        <h2>Gacha addict</h2>
+        <div style="color: #888; font-size: 0.85rem; margin-top: 5px; font-weight: 500;">ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
+    </div>
+
+   
+    <div class="container">
+        <canvas id="gameCanvas" width="600" height="120"></canvas>
+
+        <div class="controls">
+            <div class="stat-box">
+                <div>
+                    <div style="font-size: 0.75rem; color: #888; font-weight: 600; margin-bottom: 5px;">CURRENT BALANCE</div>
+                    <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
+                </div>
+                <button id="addBalanceBtn" class="add-balance-btn">+</button>
+            </div>
+
+          
+            <div class="multiplier-desc">
+                <div class="multiplier-item">
+                    <span class="multiplier-dot" style="background: var(--black);"></span>
+                    <span>BLACK 2X</span>
+                </div>
+                <div class="multiplier-item">
+                    <span class="multiplier-dot" style="background: var(--white); border: 1px solid var(--text);"></span>
+                    <span>WHITE 2X</span>
+                </div>
+                <div class="multiplier-item">
+                    <span class="multiplier-dot" style="background: var(--gold);"></span>
+                    <span>GOLD 5X</span>
+                </div>
+                <div class="multiplier-item">
+                    <span class="multiplier-dot" style="background: var(--red);"></span>
+                    <span>RED 20X</span>
+                </div>
+            </div>
+ 
+            <div class="color-selector">
+                <label class="color-label">BET COLOR</label>
+                <div class="color-options">
+                    <div class="color-option">
+                        <input type="radio" name="color" id="black" value="black" checked>
+                        <label for="black">Black</label>
+                    </div>
+                    <div class="color-option">
+                        <input type="radio" name="color" id="white" value="white">
+                        <label for="white">White</label>
+                    </div>
+                    <div class="color-option">
+                        <input type="radio" name="color" id="gold" value="gold">
+                        <label for="gold">Gold</label>
+                    </div>
+                    <div class="color-option">
+                        <input type="radio" name="color" id="red" value="red">
+                        <label for="red">Red</label>
+                    </div>
+                </div>
+            </div>
+
+          
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 0.8rem; color: #666; font-weight: 600;">STAKE AMOUNT</label>
+                <input type="number" id="betInput" value="30" min="1">
+            </div>
+
+      
+            <button id="spinButton">Spin Gacha</button>
+
+        
+            <div class="log" id="gameLog">
+                [SYSTEM]: Audio & Animation Engine Ready.<br>
+                [SYSTEM]: Local Storage Enabled.<br>
+            </div>
+            
+           
+            <div id="statsDisplay" style="font-size: 0.75rem; color: #aaa; text-align: center; letter-spacing: 1px;">TOTAL SPINS: 0</div>
+        </div>
+    </div>
+
+<script> 
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, type, duration, vol = 0.1) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+     
+    const soundTick = () => playSound(800, 'sine', 0.05, 0.02);
+    const soundWin = () => {
+        playSound(523.25, 'sine', 0.2, 0.08);
+        setTimeout(() => playSound(659.25, 'sine', 0.2, 0.08), 100);
+        setTimeout(() => playSound(783.99, 'sine', 0.3, 0.08), 200);
+    };
+    const soundLoss = () => playSound(150, 'sawtooth', 0.3, 0.06);
+    const soundBankrupt = () => {
+        playSound(200, 'sawtooth', 0.5, 0.1);
+        setTimeout(() => playSound(100, 'sawtooth', 0.8, 0.1), 300);
+    };
+    const soundSwitch = () => playSound(300, 'sine', 0.15, 0.05);
+    const soundSuccess = () => playSound(800, 'sine', 0.15, 0.08);
+    const soundError = () => playSound(200, 'square', 0.2, 0.05);
+
+    
+    const blockConfig = {
+        width: 120,
+        height: 60,
+        gap: 4,
+        colors: {
+            black: { value: '#1d1d1f', multiplier: 2, probability: 0.4 },
+            white: { value: '#ffffff', multiplier: 2, probability: 0.4 },
+            gold: { value: '#ffb300', multiplier: 5, probability: 0.15 },
+            red: { value: '#d32f2f', multiplier: 20, probability: 0.05 }
+        }
+    };
+
+    
+    const STORAGE_KEY_BALANCE = 'egs_game_balance';  
+    const STORAGE_KEY_SPINS = 'gacha_total_spins';
+    const ADMIN_PASSWORD = '198297';
+
+    let balance = 0;
+    let totalSpins = 0;
+    let isBankrupt = false;
+    let isSpinning = false;
+
+    
+    function loadFromStorage() {
+        const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
+        const savedSpins = localStorage.getItem(STORAGE_KEY_SPINS);
+         
+        balance = savedBalance ? parseFloat(savedBalance) : 0;
+        totalSpins = savedSpins ? parseInt(savedSpins) : 0;
+    }
+
+   
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEY_BALANCE, balance.toFixed(2));
+        localStorage.setItem(STORAGE_KEY_SPINS, totalSpins.toString());
+    }
+
+     
+    window.onload = () => {
+         
+        const passwordModal = document.getElementById('passwordModal');
+        const amountModal = document.getElementById('amountModal');
+        const alertModal = document.getElementById('alertModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const amountInput = document.getElementById('amountInput');
+        const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+        const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+        const amountCancelBtn = document.getElementById('amountCancelBtn');
+        const amountConfirmBtn = document.getElementById('amountConfirmBtn');
+        const alertConfirmBtn = document.getElementById('alertConfirmBtn');
+        const alertTitle = document.getElementById('alertTitle');
+        const alertContent = document.getElementById('alertContent');
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinButton = document.getElementById('spinButton');
+        const betInput = document.getElementById('betInput');
+        const colorRadios = document.querySelectorAll('input[name="color"]');
+        const log = document.getElementById('gameLog');
+        const addBalanceBtn = document.getElementById('addBalanceBtn');
+
+       
+        function openModal(modal) {
+            modal.style.display = 'flex';
+            const input = modal.querySelector('input');
+            if (input) setTimeout(() => input.focus(), 100);
+        }
+
+        function closeModal(modal) {
+            modal.style.display = 'none';
+            const input = modal.querySelector('input');
+            if (input) input.value = '';
+        }
+
+        function showAlert(title, content) {
+            alertTitle.innerText = title;
+            alertContent.innerText = content;
+            openModal(alertModal);
+        }
+
+    
+        addBalanceBtn.onclick = () => openModal(passwordModal);
+
+      
+        passwordConfirmBtn.onclick = () => {
+            const inputPwd = passwordInput.value.trim();
+            if (inputPwd !== ADMIN_PASSWORD) {
+                soundError();
+                addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Incorrect admin password.</span>");
+                closeModal(passwordModal);
+                showAlert("Access Denied", "Incorrect admin password!");
+                return;
+            }
+            soundSuccess();
+            closeModal(passwordModal);
+            openModal(amountModal);
+        };
+
+        
+        amountConfirmBtn.onclick = () => {
+            const inputAmount = parseFloat(amountInput.value.trim());
+            if (isNaN(inputAmount) || inputAmount <= 0) {
+                soundError();
+                addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Invalid amount entered.</span>");
+                showAlert("Invalid Input", "Please enter a valid positive number!");
+                return;
+            }
+            balance += inputAmount;
+            if (isBankrupt) {
+                isBankrupt = false;
+                spinButton.disabled = false;
+                betInput.disabled = false;
+                colorRadios.forEach(radio => radio.disabled = false);
+            }
+            saveToStorage();
+            updateUI();
+            soundSuccess();
+            addLog(`<span style='color:#2e7d32; font-weight:700;'>SUCCESS: Added HK$${inputAmount.toLocaleString(undefined, {minimumFractionDigits: 2})} to balance.</span>`);
+            closeModal(amountModal);
+        };
+
+      
+        passwordCancelBtn.onclick = () => closeModal(passwordModal);
+        amountCancelBtn.onclick = () => closeModal(amountModal);
+        alertConfirmBtn.onclick = () => closeModal(alertModal);
+        
+      
+        [passwordInput, amountInput].forEach(input => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') e.target.closest('.modal-card').querySelector('.modal-btn-confirm').click();
+            });
+        });
+        
+        
+        [passwordModal, amountModal, alertModal].forEach(modal => {
+            modal.addEventListener('click', (e) => e.target === modal && closeModal(modal));
+        });
+
+    
+        let blocks = [];
+        let offsetX = 0;
+        let currentSpeed = 0;
+        let deceleration = 0.985;
+        let lastTickBlock = -1;
+        const blockFullWidth = blockConfig.width + blockConfig.gap;
+ 
+        function generateBlocks() {
+            blocks = [];
+            const totalBlocks = 50;
+            const colorKeys = Object.keys(blockConfig.colors);
+            const probabilities = colorKeys.map(key => blockConfig.colors[key].probability);
+            const cumulativeProb = [];
+            let sum = 0;
+            probabilities.forEach(p => { sum += p; cumulativeProb.push(sum); });
+
+            for (let i = 0; i < totalBlocks; i++) {
+                const rand = Math.random();
+                let selectedColor = 'black';
+                for (let j = 0; j < cumulativeProb.length; j++) {
+                    if (rand < cumulativeProb[j]) {
+                        selectedColor = colorKeys[j];
+                        break;
+                    }
+                }
+                blocks.push({
+                    color: selectedColor,
+                    x: i * blockFullWidth
+                });
+            }
+        }
+
+       
+        function drawRoulette() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const { width, height } = blockConfig;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const blockY = (canvasHeight - height) / 2;
+            const centerX = canvasWidth / 2;
+
+            const cycleLength = blocks.length * blockFullWidth;
+            const normalizedOffset = offsetX % cycleLength;
+            const renderOffset = normalizedOffset < 0 ? normalizedOffset + cycleLength : normalizedOffset;
+
+            blocks.forEach(block => {
+                let renderX = block.x - renderOffset;
+                if (renderX + width < 0) renderX += cycleLength;
+                if (renderX > canvasWidth) renderX -= cycleLength;
+
+                if (renderX + width > 0 && renderX < canvasWidth) {
+                    const colorConfig = blockConfig.colors[block.color];
+                    ctx.fillStyle = colorConfig.value;
+                    ctx.fillRect(renderX, blockY, width, height);
+                    ctx.strokeStyle = '#d2d2d7';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(renderX, blockY, width, height);
+                    ctx.fillStyle = block.color === 'white' ? '#1d1d1f' : '#ffffff';
+                    ctx.font = 'bold 22px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(`${colorConfig.multiplier}X`, renderX + width/2, blockY + height/2);
+                }
+            });
+
+             
+            const pointerSize = 14;
+            ctx.fillStyle = '#1d1d1f';
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX - pointerSize/2, pointerSize);
+            ctx.lineTo(centerX + pointerSize/2, pointerSize);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(centerX, canvasHeight);
+            ctx.lineTo(centerX - pointerSize/2, canvasHeight - pointerSize);
+            ctx.lineTo(centerX + pointerSize/2, canvasHeight - pointerSize);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#1d1d1f';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(centerX, pointerSize);
+            ctx.lineTo(centerX, canvasHeight - pointerSize);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+         
+        function getWinBlock() {
+            const centerX = canvas.width / 2;
+            const cycleLength = blocks.length * blockFullWidth;
+            const normalizedOffset = offsetX % cycleLength;
+            const renderOffset = normalizedOffset < 0 ? normalizedOffset + cycleLength : normalizedOffset;
+            
+            const relativeX = centerX + renderOffset;
+            const blockIndex = Math.floor(relativeX / blockFullWidth) % blocks.length;
+            return blocks[blockIndex];
+        }
+ 
+        function animate() {
+            if (isSpinning) {
+                currentSpeed *= deceleration;
+                offsetX += currentSpeed;
+
+                const currentBlockIndex = Math.floor(offsetX / blockFullWidth);
+                if (currentBlockIndex !== lastTickBlock) {
+                    soundTick();
+                    lastTickBlock = currentBlockIndex;
+                }
+
+                if (currentSpeed < 0.3) {
+                    isSpinning = false;
+                    
+                    const winBlock = getWinBlock();
+                    const selectedColor = document.querySelector('input[name="color"]:checked').value;
+                    const bet = parseFloat(betInput.value);
+                    let winAmount = 0;
+
+                    if (winBlock.color === selectedColor) {
+                        const multiplier = blockConfig.colors[winBlock.color].multiplier;
+                        winAmount = bet * multiplier;
+                        balance += winAmount;
+                        soundWin();
+                        addLog(`WIN: ${winBlock.color.toUpperCase()} ${multiplier}X | <span style="color:#2e7d32; font-weight:700">HK$${winAmount.toFixed(2)}</span>`);
+                    } else {
+                        soundLoss();
+                        addLog(`LOSE: Bet on ${selectedColor.toUpperCase()}, landed on ${winBlock.color.toUpperCase()} | <span style="color:#d32f2f; font-weight:700">-HK$${bet.toFixed(2)}</span>`);
+                    }
+
+                    totalSpins++;
+                    saveToStorage();
+                    updateUI();
+                    checkBankrupt();
+                    
+                    spinButton.disabled = false;
+                    betInput.disabled = false;
+                    colorRadios.forEach(radio => radio.disabled = false);
+                }
+            }
+
+            drawRoulette();
+            requestAnimationFrame(animate);
+        }
+
+      
+        spinButton.onclick = () => {
+            if (isSpinning || isBankrupt) return;
+            const bet = parseFloat(betInput.value);
+            if (bet > balance || bet <= 0) {
+                soundError();
+                addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Insufficient Funds.</span>");
+                return;
+            }
+
+            balance -= bet;
+            saveToStorage();
+            updateUI();
+
+            isSpinning = true;
+            spinButton.disabled = true;
+            betInput.disabled = true;
+            colorRadios.forEach(radio => radio.disabled = true);
+
+            currentSpeed = 18 + Math.random() * 12;
+            deceleration = 0.982 + Math.random() * 0.012;
+            lastTickBlock = -1;
+        };
+
+         
+        function updateUI() {
+            document.getElementById('balanceDisplay').innerText = `HK$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            document.getElementById('statsDisplay').innerText = `TOTAL SPINS: ${totalSpins}`;
+        }
+
+        function addLog(msg) {
+            const entry = document.createElement('div');
+            entry.style.marginBottom = "5px";
+            entry.innerHTML = `<span style="color: #bbb;">#</span> ${msg}`;
+            log.prepend(entry);
+        }
+
+        function checkBankrupt() {
+            if (balance < 1 && !isBankrupt) {
+                isBankrupt = true;
+                spinButton.disabled = true;
+                betInput.disabled = true;
+                colorRadios.forEach(radio => radio.disabled = true);
+                soundBankrupt();
+                addLog("<span style='color:#d32f2f; font-weight:700;'>BANKRUPT! You have lost all your funds.</span>");
+                showAlert("BANKRUPT!", "You have no remaining balance to continue playing.\nClick '+' to add balance.");
+            }
+        }
+
+         
+        colorRadios.forEach(radio => {
+            radio.addEventListener('change', () => soundSwitch());
+        });
+
+        
+        setTimeout(() => document.getElementById('load-progress').style.width = '100%', 200);
+        setTimeout(() => {
+            document.getElementById('splash-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.visibility = 'hidden';
+                loadFromStorage();
+                generateBlocks();
+                updateUI();
+                animate();
+                addLog(`System initialized. Loaded balance from storage.`);
+                checkBankrupt();
+            }, 1000);
+        }, 2800);
+    };
+</script>
+</body>
+</html>
