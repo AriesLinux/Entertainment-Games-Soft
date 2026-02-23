@@ -14,7 +14,7 @@
   Focused on the R&D of online and offline gambling software, probability theory research, and Large Language Model (LLM) dynamic interaction applications.
 </p>
 
-[繁體中文](./README_MC.md)
+[繁體中文](./README_TW.md)
 
 </div>
 
