@@ -9,12 +9,12 @@
 ![License](https://img.shields.io/badge/License-GPL_3.0-red?style=for-the-badge)
 
 <p align="center">
-  <strong>"Não procuramos a maximização do lucro; procuramos os limites técnicos da justiça e do entretenimento no jogo."</strong>
+  <strong>"Não procuramos a maximização do lucro. Procuramos os limites técnicos da justiça e do entretenimento no jogo."</strong>
   <br>
   Dedicada ao R&D de jogos de fortuna e azar online e offline, investigação em teoria das probabilidades e aplicações de interação dinâmica com Large Language Models (LLM).
 </p>
 
-[ENGLISH](./README.md) | [繁體中文](./README_TW.md)
+[ENGLISH](./README.md) | [繁體中文](./README_MC.md)
 
 </div>
 
@@ -36,7 +36,7 @@ Aqui estão alojados os nossos principais sistemas de jogo. Os desenvolvedores s
 
 | Projeto | Categoria | Destaques Técnicos | Estado |
 | :--- | :--- | :--- | :--- |
-| **🎰 EGS-Games** | Jogos de Casino | Desenvolvido em HTML puro; leve e eficiente. Exporta dados de jogo para análise. | [Production] |
+| **🎰 EGS-Games** | Jogos de Casino | Desenvolvido em HTML puro. Leve e eficiente. Exporta dados de jogo para análise. | [Production] |
 | **🎲 EGS-Core-Engine** | Backend de Jogo | Motor de apostas de alta concorrência baseado em WebSocket. | [Beta] |
 | **🧠 EGS-LLM-Guard** | Monitorização IA | Utiliza LLMs para detetar apostas anómalas e analisar o comportamento do jogador. | [Research] |
 | **📊 Prob-Lab** | Lab. de Probabilidade | Ferramenta de visualização para simular distribuições de probabilidade em milhões de jogadas. | [Active] |
