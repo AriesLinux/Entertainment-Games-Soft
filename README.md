@@ -14,7 +14,7 @@
   Focused on the R&D of online and offline gambling software, probability theory research, and Large Language Model (LLM) dynamic interaction applications.
 </p>
 
-[繁體中文](./README_TW.md)[Português](./README_MC.md)
+ [Português](./README_PG.md) | [繁體中文](./README_MC.md)
 
 </div>
 
@@ -22,7 +22,7 @@
 
 ## 🏛️ Company Vision
 
-**Entertainment Games Soft (EGS)** is a non-typical private gambling development studio intended to be established in Macau. We believe the future of the industry lies not in the "house edge," but in **technological transparency** and **the aesthetics of pure probability.**
+**Entertainment Games Soft (EGS)** is a non-typical private gambling development studio intended to be established in Macau. We believe the future of the industry lies not in the "house edge" but in **technological transparency** and **the aesthetics of pure probability**.
 
 * **Non-Profit Oriented**: Our mission is to explore the essence of gambling behavior through code and mathematical research.
 * **Full-Stack Open Source**: From RNG (Random Number Generators) to backend engines, all source code is publicly available on GitHub for audit.
