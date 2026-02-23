@@ -4,7 +4,13 @@
 ## Research-First Open Source Gambling Technology
 <br><br><br>
 <img src="https://github.com/user-attachments/assets/7c433560-5b9c-4b27-b533-46ab583b1575" width="500" alt="EGS Logo">
+<br><br><br>
+
+<img src="https://github.com/AriesLinux/Entertainment-Games-Soft/blob/main/DHC%20LOGO.png" width="500" alt="DHC Logo">
 <br><br><br><br>
+
+
+
 
 ![License](https://img.shields.io/badge/License-GPL_3.0-red?style=for-the-badge)
 
