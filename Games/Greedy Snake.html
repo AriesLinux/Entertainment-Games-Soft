@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greedy Snake | EGS Research</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --primary: #2e7d32;
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
+            --loss: #d32f2f;
+            --win: #2e7d32;
+            --gold: #ffb300;
+            --mask: rgba(0, 0, 0, 0.6);
+        }
+
+     
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--mask);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: var(--card);
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 360px;
+            border: 1px solid var(--border);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .modal-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0 0 18px 0;
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            width: 100%;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.85rem;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: var(--text);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm {
+            background: var(--text);
+            color: #fff;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+       
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease;
+        }
+
+        #splash-screen img {
+            width: 400px;
+            height: auto;
+            margin-bottom: 25px;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-bar {
+            width: 180px;
+            height: 3px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: #000;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+         
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 30px;
+            border: 1px solid var(--border);
+            max-width: 1100px;
+            width: 100%;
+        }
+
+      
+        .game-canvas-wrapper {
+            flex: 1;
+            min-width: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            background: #f9f9fb;
+            border-radius: 16px;
+            border: 1px solid #eee;
+        }
+
+        canvas {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+
+ 
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            min-width: 280px;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        h2 { 
+            margin: 0; 
+            color: var(--text); 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            letter-spacing: -1.5px;
+            text-transform: uppercase;
+        }
+        
+        .stat-box {
+            background: #f9f9fb;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+     
+        .add-balance-btn {
+            background: var(--text);
+            color: #fff;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+            z-index: 10;
+        }
+        .add-balance-btn:hover { background: #333; transform: translateY(-1px); }
+        .add-balance-btn:active { transform: translateY(0); }
+
+        input {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+         
+        .difficulty-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .difficulty-label {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .difficulty-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .difficulty-option {
+            position: relative;
+        }
+        .difficulty-option input {
+            position: absolute;
+            opacity: 0;
+        }
+        .difficulty-option label {
+            display: block;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+        }
+        .difficulty-option input:checked + label {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+        }
+        .difficulty-option label:hover {
+            transform: translateY(-1px);
+        }
+
+         
+        .game-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .stat-item {
+            background: #f9f9fb;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.65rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .stat-value.multiplier {
+            color: var(--gold);
+        }
+
+        button {
+            background: var(--text);
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        button:hover { background: #333; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+        button.cashout { background: var(--win); }
+        button.cashout:hover { background: #1b5e20; }
+        button.cashout:disabled { background: #aaa; }
+
+        .log {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.7rem;
+            height: 120px;
+            overflow-y: auto;
+            background: #f9f9fb;
+            padding: 10px;
+            border-radius: 8px;
+            color: #444;
+            border: 1px solid #eee;
+            line-height: 1.4;
+        }
+
+        .header { text-align: center; margin-bottom: 20px; }
+
+        .rule-desc {
+            background: #f9f9fb;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            font-size: 0.7rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+ 
+        .control-hint {
+            font-size: 0.65rem;
+            color: #888;
+            text-align: center;
+            margin-top: -10px;
+        }
+    </style>
+</head>
+<body>
+
+ 
+    <div class="modal-mask" id="passwordModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Admin Verification</h3>
+            <p class="modal-desc">Enter admin password to add balance</p>
+            <input type="password" class="modal-input" id="passwordInput" placeholder="Enter password" maxlength="6">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="passwordCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="passwordConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+ 
+    <div class="modal-mask" id="amountModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Add Balance</h3>
+            <p class="modal-desc">Enter the amount to add to your balance</p>
+            <input type="number" class="modal-input" id="amountInput" placeholder="Enter amount (HK$)" min="1" step="1">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="amountCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="amountConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="modal-mask" id="alertModal">
+        <div class="modal-card">
+            <h3 class="modal-title" id="alertTitle">Notice</h3>
+            <p class="modal-desc" id="alertContent"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" id="alertConfirmBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+  
+    <div id="splash-screen">
+        <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="EGS Logo">
+        <div class="loading-bar">
+            <div class="loading-progress" id="load-progress"></div>
+        </div>
+    </div>
+
+    
+    <div class="header">
+        <h2>Greedy Snake</h2>
+        <div style="color: #888; font-size: 0.8rem; margin-top: 4px; font-weight: 500;">贪财蛇 | ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
+    </div>
+
+  
+    <div class="container">
+       
+        <div class="game-canvas-wrapper">
+            <canvas id="gameCanvas" width="480" height="480"></canvas>
+        </div>
+
+ 
+        <div class="controls">
+            <div class="stat-box">
+                <div>
+                    <div style="font-size: 0.7rem; color: #888; font-weight: 600; margin-bottom: 4px;">CURRENT BALANCE</div>
+                    <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
+                </div>
+                <button id="addBalanceBtn" class="add-balance-btn">+</button>
+            </div>
+
+            
+            <div class="game-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Current Multiplier</div>
+                    <div class="stat-value multiplier" id="multiplierDisplay">1.0x</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Snake Length</div>
+                    <div class="stat-value" id="lengthDisplay">3</div>
+                </div>
+            </div>
+
+           
+            <div class="difficulty-selector">
+                <label class="difficulty-label">DIFFICULTY LEVEL</label>
+                <div class="difficulty-options">
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="easy" value="easy" checked>
+                        <label for="easy">
+                            <span>EASY</span>
+                            <span>SLOW</span>
+                        </label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="medium" value="medium">
+                        <label for="medium">
+                            <span>MEDIUM</span>
+                            <span>MEDIUM</span>
+                        </label>
+                    </div>
+                    <div class="difficulty-option">
+                        <input type="radio" name="difficulty" id="hard" value="hard">
+                        <label for="hard">
+                            <span>HARD</span>
+                            <span>FAST</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+    
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 0.75rem; color: #666; font-weight: 600;">STAKE AMOUNT</label>
+                <input type="number" id="betInput" value="50" min="1" step="1">
+            </div>
+
+          
+            <button id="startBtn">Start Game</button>
+            <button id="cashoutBtn" class="cashout" disabled>Cash Out (Enter)</button>
+            <button id="resetBtn" disabled>Reset Game</button>
+
+        
+            <div class="control-hint">Use ARROW KEYS / WASD to control | Press ENTER to Cash Out</div>
+
+            
+            <div class="rule-desc">
+                <strong>Rules:</strong><br>
+                • Eat green food: +small multiplier<br>
+                • Eat gold cash food: +big multiplier<br>
+                • Hit wall/self: lose all stake<br>
+                • Cash out anytime to lock winnings
+            </div>
+
+            
+            <div class="log" id="gameLog">
+                [SYSTEM]: Snake Engine Ready.<br>
+                [SYSTEM]: Local Storage Enabled.<br>
+            </div>
+        </div>
+    </div>
+
+<script>
+     
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, type, duration, vol = 0.1) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+  
+    const soundEat = () => playSound(600, 'sine', 0.1, 0.05);
+    const soundEatGold = () => {
+        playSound(800, 'triangle', 0.1, 0.08);
+        setTimeout(() => playSound(1000, 'triangle', 0.15, 0.08), 50);
+    };
+    const soundCountdown = () => playSound(300, 'sine', 0.2, 0.05);
+    const soundCountdownGo = () => playSound(600, 'sine', 0.3, 0.08);
+    const soundDie = () => {
+        playSound(200, 'sawtooth', 0.3, 0.08);
+        setTimeout(() => playSound(100, 'sawtooth', 0.4, 0.08), 150);
+    };
+    const soundCashout = () => {
+        playSound(523.25, 'sine', 0.2, 0.08);
+        setTimeout(() => playSound(659.25, 'sine', 0.2, 0.08), 100);
+        setTimeout(() => playSound(783.99, 'sine', 0.3, 0.08), 200);
+    };
+    const soundStart = () => playSound(400, 'sine', 0.1, 0.05);
+    const soundSuccess = () => playSound(800, 'sine', 0.15, 0.08);
+    const soundError = () => playSound(200, 'square', 0.2, 0.05);
+    const soundSwitch = () => playSound(300, 'sine', 0.15, 0.05);
+
+    
+    const difficultyConfig = {
+        easy: {
+            name: "EASY",
+            speed: 150,  
+            normalMultiplier: 0.2,
+            goldMultiplier: 1,
+            gridSize: 20
+        },
+        medium: {
+            name: "MEDIUM",
+            speed: 100,
+            normalMultiplier: 0.5,
+            goldMultiplier: 2,
+            gridSize: 20
+        },
+        hard: {
+            name: "HARD",
+            speed: 60,
+            normalMultiplier: 1,
+            goldMultiplier: 5,
+            gridSize: 20
+        }
+    };
+
+    
+    const STORAGE_KEY_BALANCE = 'egs_game_balance';
+    const STORAGE_KEY_GAMES = 'greedy_snake_total_games';
+    const ADMIN_PASSWORD = '198297';
+
+    let balance = 0;
+    let totalGames = 0;
+    let isPlaying = false;
+    let isCountingDown = false; 
+    let currentDifficulty = difficultyConfig.easy;
+    let currentBet = 0;
+    let currentMultiplier = 1;
+    let snake = [];
+    let direction = { x: 1, y: 0 };
+    let nextDirection = { x: 1, y: 0 };
+    let food = null;
+    let isGoldFood = false;
+    let gameLoop = null;
+    let canvas, ctx;
+
+     
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const multiplierDisplay = document.getElementById('multiplierDisplay');
+    const lengthDisplay = document.getElementById('lengthDisplay');
+    const betInput = document.getElementById('betInput');
+    const startBtn = document.getElementById('startBtn');
+    const cashoutBtn = document.getElementById('cashoutBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const addBalanceBtn = document.getElementById('addBalanceBtn');
+    const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+    const gameLog = document.getElementById('gameLog');
+    const splash = document.getElementById('splash-screen');
+    const progress = document.getElementById('load-progress');
+    const allModals = document.querySelectorAll('.modal-mask');
+
+     
+    const passwordModal = document.getElementById('passwordModal');
+    const amountModal = document.getElementById('amountModal');
+    const alertModal = document.getElementById('alertModal');
+    const passwordInput = document.getElementById('passwordInput');
+    const amountInput = document.getElementById('amountInput');
+    const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+    const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+    const amountCancelBtn = document.getElementById('amountCancelBtn');
+    const amountConfirmBtn = document.getElementById('amountConfirmBtn');
+    const alertConfirmBtn = document.getElementById('alertConfirmBtn');
+    const alertTitle = document.getElementById('alertTitle');
+    const alertContent = document.getElementById('alertContent');
+
+    function openModal(modal) {
+        modal.style.display = 'flex';
+        const input = modal.querySelector('input');
+        if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeModal(modal) {
+        modal.style.display = 'none';
+        const input = modal.querySelector('input');
+        if (input) input.value = '';
+    }
+
+    function showAlert(title, content) {
+        alertTitle.innerText = title;
+        alertContent.innerText = content;
+        openModal(alertModal);
+    }
+
+     
+    function isModalOpen() {
+        return Array.from(allModals).some(modal => modal.style.display === 'flex');
+    }
+
+    
+    passwordConfirmBtn.onclick = () => {
+        const inputPwd = passwordInput.value.trim();
+        if (inputPwd !== ADMIN_PASSWORD) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Incorrect admin password.</span>");
+            closeModal(passwordModal);
+            showAlert("Access Denied", "Incorrect admin password!");
+            return;
+        }
+        soundSuccess();
+        closeModal(passwordModal);
+        openModal(amountModal);
+    };
+
+  
+    amountConfirmBtn.onclick = () => {
+        const inputAmount = safeParseNumber(amountInput.value.trim(), 0);
+        if (isNaN(inputAmount) || inputAmount <= 0 || !isFinite(inputAmount)) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Invalid amount entered.</span>");
+            showAlert("Invalid Input", "Please enter a valid positive number!");
+            return;
+        }
+        balance += inputAmount;
+        balance = roundNumber(balance, 2);
+        saveToStorage();
+        updateUI();
+        soundSuccess();
+        addLog(`<span style='color:#2e7d32; font-weight:700;'>SUCCESS: Added HK$${inputAmount.toLocaleString(undefined, {minimumFractionDigits: 2})} to balance.</span>`);
+        closeModal(amountModal);
+    };
+
+   
+    passwordCancelBtn.onclick = () => closeModal(passwordModal);
+    amountCancelBtn.onclick = () => closeModal(amountModal);
+    alertConfirmBtn.onclick = () => closeModal(alertModal);
+    [passwordInput, amountInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') e.target.closest('.modal-card').querySelector('.modal-btn-confirm').click();
+        });
+    });
+    [passwordModal, amountModal, alertModal].forEach(modal => {
+        modal.addEventListener('click', (e) => e.target === modal && closeModal(modal));
+    });
+    addBalanceBtn.onclick = () => openModal(passwordModal);
+
+ 
+    function roundNumber(num, decimal) {
+        return Math.round(num * Math.pow(10, decimal)) / Math.pow(10, decimal);
+    }
+
+    function safeParseNumber(str, defaultValue = 0) {
+        const num = parseFloat(str);
+        return (isNaN(num) || !isFinite(num)) ? defaultValue : num;
+    }
+
+    
+    function loadFromStorage() {
+        const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
+        const savedGames = localStorage.getItem(STORAGE_KEY_GAMES);
+        balance = safeParseNumber(savedBalance, 0);
+        totalGames = safeParseNumber(savedGames, 0);
+        balance = roundNumber(balance, 2);
+    }
+
+    function saveToStorage() {
+        const safeBalance = isNaN(balance) || !isFinite(balance) ? 0 : roundNumber(balance, 2);
+        localStorage.setItem(STORAGE_KEY_BALANCE, safeBalance.toFixed(2));
+        localStorage.setItem(STORAGE_KEY_GAMES, Math.floor(totalGames).toString());
+    }
+
+    function updateUI() {
+        if (isNaN(balance) || !isFinite(balance)) balance = 0;
+        const displayBalance = roundNumber(balance, 2);
+        balanceDisplay.innerText = `HK$${displayBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        const displayMultiplier = roundNumber(currentMultiplier, 1);
+        multiplierDisplay.innerText = `${displayMultiplier}x`;
+        lengthDisplay.innerText = snake.length;
+    }
+
+    function addLog(msg) {
+        const entry = document.createElement('div');
+        entry.style.marginBottom = "4px";
+        entry.innerHTML = `<span style="color: #bbb;">#</span> ${msg}`;
+        gameLog.prepend(entry);
+        gameLog.scrollTop = 0;
+    }
+
+   
+    function initGame() {
+        canvas = document.getElementById('gameCanvas');
+        ctx = canvas.getContext('2d');
+        drawInitialScreen();
+    }
+
+    function drawInitialScreen() {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#888';
+        ctx.font = '20px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Press START to play', canvas.width / 2, canvas.height / 2);
+    }
+
+ 
+    function drawCountdown(count) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#1d1d1f';
+        ctx.font = 'bold 80px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(count > 0 ? count : 'GO', canvas.width / 2, canvas.height / 2);
+        if (count > 0) {
+            ctx.font = '20px -apple-system, sans-serif';
+            ctx.fillText('Get Ready!', canvas.width / 2, canvas.height / 2 + 60);
+        }
+    }
+
+    
+    async function startCountdown() {
+        isCountingDown = true;
+        let count = 3;
+        drawCountdown(count);
+        soundCountdown();
+
+        for (let i = count - 1; i >= 0; i--) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (i > 0) {
+                drawCountdown(i);
+                soundCountdown();
+            } else {
+                drawCountdown(0);
+                soundCountdownGo();
+            }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+        isCountingDown = false;
+        
+        gameLoop = setInterval(gameStep, currentDifficulty.speed);
+        drawGame();
+    }
+
+    function resetSnake() {
+        const gridSize = currentDifficulty.gridSize;
+        const startX = Math.floor(canvas.width / gridSize / 2);
+        const startY = Math.floor(canvas.height / gridSize / 2);
+        snake = [
+            { x: startX, y: startY },
+            { x: startX - 1, y: startY },
+            { x: startX - 2, y: startY }
+        ];
+        direction = { x: 1, y: 0 };
+        nextDirection = { x: 1, y: 0 };
+        currentMultiplier = 1;
+        spawnFood();
+    }
+
+    function spawnFood() {
+        const gridSize = currentDifficulty.gridSize;
+        const maxX = Math.floor(canvas.width / gridSize);
+        const maxY = Math.floor(canvas.height / gridSize);
+        
+        let newFood;
+        let isOnSnake = true;
+        while (isOnSnake) {
+            newFood = {
+                x: Math.floor(Math.random() * maxX),
+                y: Math.floor(Math.random() * maxY)
+            };
+            isOnSnake = snake.some(seg => seg.x === newFood.x && seg.y === newFood.y);
+        }
+        
+        food = newFood;
+        isGoldFood = Math.random() < 0.15;  
+    }
+
+    function drawGame() {
+        const gridSize = currentDifficulty.gridSize;
+        
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+     
+        ctx.fillStyle = '#1d1d1f';
+        snake.forEach((segment, index) => {
+            if (index === 0) {
+                 
+                ctx.fillStyle = '#333';
+            } else {
+                ctx.fillStyle = '#1d1d1f';
+            }
+            ctx.fillRect(
+                segment.x * gridSize + 1,
+                segment.y * gridSize + 1,
+                gridSize - 2,
+                gridSize - 2
+            );
+        });
+
+        
+        if (food) {
+            if (isGoldFood) {
+             
+                ctx.fillStyle = '#ffb300';
+                ctx.beginPath();
+                ctx.arc(
+                    food.x * gridSize + gridSize / 2,
+                    food.y * gridSize + gridSize / 2,
+                    gridSize / 2 - 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2);
+            } else {
+               
+                ctx.fillStyle = '#2e7d32';
+                ctx.beginPath();
+                ctx.arc(
+                    food.x * gridSize + gridSize / 2,
+                    food.y * gridSize + gridSize / 2,
+                    gridSize / 2 - 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+    }
+
+    function gameStep() {
+        if (!isPlaying || isCountingDown) return;
+
+        
+        direction = { ...nextDirection };
+
+         
+        const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+        const gridSize = currentDifficulty.gridSize;
+        const maxX = Math.floor(canvas.width / gridSize);
+        const maxY = Math.floor(canvas.height / gridSize);
+
+       
+        if (head.x < 0 || head.x >= maxX || head.y < 0 || head.y >= maxY) {
+            gameOver(false);
+            return;
+        }
+
+        
+        if (snake.some(seg => seg.x === head.x && seg.y === head.y)) {
+            gameOver(false);
+            return;
+        }
+
+         
+        snake.unshift(head);
+
+        
+        if (food && head.x === food.x && head.y === food.y) {
+            if (isGoldFood) {
+                currentMultiplier += currentDifficulty.goldMultiplier;
+                soundEatGold();
+                addLog(`Ate Gold Cash! Multiplier +${currentDifficulty.goldMultiplier} → ${roundNumber(currentMultiplier, 1)}x`);
+            } else {
+                currentMultiplier += currentDifficulty.normalMultiplier;
+                soundEat();
+            }
+            currentMultiplier = roundNumber(currentMultiplier, 1);
+            spawnFood();
+            updateUI();
+        } else {
+            
+            snake.pop();
+        }
+
+        drawGame();
+        updateUI();
+    }
+
+    function gameOver(isWin) {
+        isPlaying = false;
+        clearInterval(gameLoop);
+        
+        if (!isWin) {
+            soundDie();
+            addLog(`<span style='color:#d32f2f; font-weight:700;'>GAME OVER! Hit wall/self. Lost HK$${roundNumber(currentBet, 2).toFixed(2)}</span>`);
+            showAlert("GAME OVER!", "You hit the wall or yourself!\nYou lost your entire stake.");
+        }
+        
+        endGame(isWin);
+    }
+
+    function cashout() {
+        if (!isPlaying || isCountingDown || isModalOpen()) return;
+        isPlaying = false;
+        clearInterval(gameLoop);
+        
+        const finalMultiplier = roundNumber(currentMultiplier, 1);
+        const winAmount = roundNumber(currentBet * finalMultiplier, 2);
+        balance += winAmount;
+        balance = roundNumber(balance, 2);
+        
+        soundCashout();
+        addLog(`<span style='color:#2e7d32; font-weight:700;'>CASH OUT SUCCESS! Won HK$${winAmount.toFixed(2)} (${finalMultiplier}x)</span>`);
+        showAlert("SUCCESS!", `You cashed out HK$${winAmount.toFixed(2)}!\nFinal Multiplier: ${finalMultiplier}x`);
+        
+        endGame(true);
+    }
+
+    function endGame(isWin) {
+        saveToStorage();
+        updateUI();
+        
+        startBtn.disabled = false;
+        cashoutBtn.disabled = true;
+        resetBtn.disabled = true;
+        betInput.disabled = false;
+        difficultyRadios.forEach(radio => radio.disabled = false);
+    }
+
+   
+    startBtn.onclick = () => {
+        const bet = safeParseNumber(betInput.value, 0);
+        if (bet > balance || bet <= 0) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Insufficient Funds.</span>");
+            showAlert("Error", "Insufficient balance to start game!");
+            return;
+        }
+
+      
+        currentBet = bet;
+        balance -= bet;
+        balance = roundNumber(balance, 2);
+        isPlaying = true;
+        totalGames++;
+
+        saveToStorage();
+        resetSnake();
+        updateUI();
+ 
+        startBtn.disabled = true;
+        cashoutBtn.disabled = false;
+        resetBtn.disabled = false;
+        betInput.disabled = true;
+        difficultyRadios.forEach(radio => radio.disabled = true);
+
+         
+        startCountdown();
+
+        addLog(`<span style='font-weight:700;'>GAME STARTED</span> | Difficulty: ${currentDifficulty.name} | Stake: HK$${bet.toFixed(2)}`);
+        soundStart();
+    };
+
+ 
+    cashoutBtn.onclick = cashout;
+ 
+    resetBtn.onclick = () => {
+        isPlaying = false;
+        isCountingDown = false;
+        clearInterval(gameLoop);
+        currentBet = 0;
+        currentMultiplier = 1;
+
+        resetSnake();
+        drawGame();
+        updateUI();
+
+        startBtn.disabled = false;
+        cashoutBtn.disabled = true;
+        resetBtn.disabled = true;
+        betInput.disabled = false;
+        difficultyRadios.forEach(radio => radio.disabled = false);
+
+        addLog(`<span style='font-weight:700;'>GAME RESET</span>`);
+    };
+
+    
+    document.addEventListener('keydown', (e) => {
+        
+        if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+            if (isPlaying && !isCountingDown && !isModalOpen()) {
+                e.preventDefault();
+                cashout();
+                return;
+            }
+        }
+
+        
+        if (!isPlaying || isCountingDown) return;
+
+        switch (e.key) {
+            case 'ArrowUp':
+            case 'w':
+            case 'W':
+                if (direction.y !== 1) nextDirection = { x: 0, y: -1 };
+                e.preventDefault();
+                break;
+            case 'ArrowDown':
+            case 's':
+            case 'S':
+                if (direction.y !== -1) nextDirection = { x: 0, y: 1 };
+                e.preventDefault();
+                break;
+            case 'ArrowLeft':
+            case 'a':
+            case 'A':
+                if (direction.x !== 1) nextDirection = { x: -1, y: 0 };
+                e.preventDefault();
+                break;
+            case 'ArrowRight':
+            case 'd':
+            case 'D':
+                if (direction.x !== -1) nextDirection = { x: 1, y: 0 };
+                e.preventDefault();
+                break;
+        }
+    });
+
+  
+    difficultyRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            currentDifficulty = difficultyConfig[e.target.value];
+            soundSwitch();
+            addLog(`Difficulty switched to: <span style="font-weight:700">${currentDifficulty.name}</span>`);
+        });
+    });
+
+ 
+    window.onload = () => {
+        setTimeout(() => { progress.style.width = '100%'; }, 200);
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.visibility = 'hidden';
+                loadFromStorage();
+                initGame();
+                updateUI();
+                addLog(`System initialized. Loaded balance from storage.`);
+            }, 1000);
+        }, 2800);
+    };
+</script>
+</body>
+</html>
