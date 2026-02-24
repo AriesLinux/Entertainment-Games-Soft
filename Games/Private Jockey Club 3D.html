@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Jockey Club 3D | EGS Research</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --primary: #2e7d32;
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
+            --loss: #d32f2f;
+            --win: #2e7d32;
+            --gold: #ffb300;
+            --mask: rgba(0, 0, 0, 0.75);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0a0a0a;
+            color: var(--text);
+        }
+
+   
+        #gameCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            background: #87CEEB;
+        }
+
+ 
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease;
+        }
+
+        #splash-screen .logo {
+            width: 400px;
+            height: 120px;
+            margin-bottom: 25px;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          
+            background-image: url('https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20EliteGames%20Soft%20LOGO%EF%BC%88Private%20Jockey%20Club%EF%BC%89.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-bar {
+            width: 180px;
+            height: 3px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: #000;
+            transition: width 4s cubic-bezier(0.4, 0, 0.2, 1); /* 动画时间从2s改为4s */
+        }
+
+    
+        .ui-overlay {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .ui-overlay > * {
+            pointer-events: auto;
+        }
+
+     
+        .top-bar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .top-bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .top-bar-label {
+            font-size: 0.65rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .top-bar-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .top-bar-value.balance {
+            color: var(--primary);
+        }
+
+        .add-balance-btn {
+            background: var(--text);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+        }
+        .add-balance-btn:hover { background: #333; transform: scale(1.1); }
+
+     
+        .bottom-panel {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+            z-index: 100;
+            max-width: 900px;
+            width: 90%;
+        }
+
+ 
+        .horse-select-section {
+            flex: 1;
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .horse-grid {
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            gap: 6px;
+        }
+
+        .horse-chip {
+            padding: 8px 6px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            background: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .horse-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .horse-chip.selected {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+        }
+
+        .horse-chip .odds {
+            font-size: 0.6rem;
+            opacity: 0.8;
+        }
+
+       
+        .bet-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .bet-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .bet-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            background: #fff;
+        }
+
+        .bet-input:focus {
+            outline: none;
+            border-color: var(--text);
+        }
+
+        .action-btn {
+            padding: 14px 28px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .action-btn.primary:hover {
+            background: #1b5e20;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 125, 50, 0.3);
+        }
+
+        .action-btn.primary:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .action-btn.secondary {
+            background: var(--text);
+            color: #fff;
+        }
+
+        .action-btn.secondary:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+
+        .potential-win {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: right;
+        }
+
+        .potential-win .amount {
+            font-weight: 700;
+            color: var(--gold);
+            font-size: 1rem;
+        }
+
+       
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--mask);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-card {
+            background: var(--card);
+            padding: 32px;
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 480px;
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: modalFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .modal-subtitle {
+            font-size: 0.85rem;
+            color: #888;
+            margin: 0 0 20px 0;
+        }
+
+        .modal-desc {
+            font-size: 0.95rem;
+            color: #444;
+            margin: 0 0 24px 0;
+            line-height: 1.6;
+        }
+
+        .modal-input {
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--text);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: var(--text);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm {
+            background: var(--text);
+            color: #fff;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+     
+        .manager-modal {
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
+        }
+
+        .manager-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: #fff;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .manager-content {
+            flex: 1;
+        }
+
+        .manager-name {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .manager-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .manager-speech {
+            background: #f9f9fb;
+            padding: 16px;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+            font-size: 0.9rem;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+ 
+        .race-status-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .race-status-text {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .race-status-text.show {
+            opacity: 1;
+            animation: statusPulse 0.5s ease-out;
+        }
+
+        @keyframes statusPulse {
+            from { transform: scale(1.2); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+    
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+  
+    <canvas id="gameCanvas"></canvas>
+
+   
+    <div id="splash-screen">
+        <div class="logo"></div> 
+        <div class="loading-bar">
+            <div class="loading-progress" id="load-progress"></div>
+        </div>
+    </div>
+
+    
+    <div class="top-bar hidden" id="topBar">
+        <div class="top-bar-item">
+            <div class="top-bar-label">Balance</div>
+            <div class="top-bar-value balance" id="balanceDisplay">HK$0.00</div>
+        </div>
+        <div class="top-bar-item">
+            <div class="top-bar-label">Selected Horse</div>
+            <div class="top-bar-value" id="selectedHorseDisplay">HORSE 03</div>
+        </div>
+        <div class="top-bar-item">
+            <div class="top-bar-label">Odds</div>
+            <div class="top-bar-value" id="oddsDisplay">2.5x</div>
+        </div>
+        <button class="add-balance-btn" id="addBalanceBtn">+</button>
+    </div>
+
+ 
+    <div class="race-status-overlay">
+        <div class="race-status-text" id="raceStatusText"></div>
+    </div>
+
+   
+    <div class="bottom-panel hidden" id="bottomPanel">
+        <div class="horse-select-section">
+            <div class="section-label">SELECT YOUR HORSE (1-13)</div>
+            <div class="horse-grid" id="horseGrid"></div>
+        </div>
+        <div class="bet-section">
+            <div class="section-label">PLACE YOUR STAKE</div>
+            <div class="bet-input-wrapper">
+                <input type="number" class="bet-input" id="betInput" value="100" min="1" step="1">
+            </div>
+            <div class="potential-win">
+                Potential Win: <span class="amount" id="potentialWinDisplay">HK$250.00</span>
+            </div>
+            <button class="action-btn primary" id="startRaceBtn">START RACE</button>
+        </div>
+    </div>
+
+    
+    <div class="modal-mask" id="passwordModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Admin Verification</h3>
+            <p class="modal-desc">Enter admin password to add balance to your account</p>
+            <input type="password" class="modal-input" id="passwordInput" placeholder="Enter password" maxlength="6">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="passwordCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="passwordConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+   
+    <div class="modal-mask" id="amountModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Add Balance</h3>
+            <p class="modal-desc">Enter the amount to add to your Private Jockey Club account</p>
+            <input type="number" class="modal-input" id="amountInput" placeholder="Enter amount (HK$)" min="1" step="1">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="amountCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="amountConfirmBtn">Add Balance</button>
+            </div>
+        </div>
+    </div>
+ 
+    <div class="modal-mask" id="resultModal">
+        <div class="modal-card">
+            <h3 class="modal-title" id="resultTitle">Race Result</h3>
+            <p class="modal-desc" id="resultContent"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" id="resultConfirmBtn">Next Race</button>
+            </div>
+        </div>
+    </div>
+
+   
+    <div class="modal-mask" id="managerModal">
+        <div class="modal-card">
+            <div class="manager-modal">
+                <div class="manager-avatar">MJ</div>
+                <div class="manager-content">
+                    <div class="manager-name">Your Private Manager</div>
+                    <div class="manager-title">Welcome to Private Jockey Club</div>
+                    <div class="manager-speech">
+                        Good day, sir/madam. I'm your private racing manager. <br><br>
+                        Here at PJC, you'll experience the most exclusive 3D horse racing. Simply select your horse, place your stake, and watch the race unfold in real-time. <br><br>
+                        The race is not always to the swift, but to those who keep on running. So, good luck!!!
+                    </div>
+                    
+                    <div class="modal-buttons">
+                        <button class="modal-btn modal-btn-confirm" id="managerConfirmBtn">Let's Race</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script>
+       
+        const horseList = [
+            { id: 1, name: "HORSE 01", odds: 1.2, color: 0xd32f2f },
+            { id: 2, name: "HORSE 02", odds: 1.8, color: 0xe64a19 },
+            { id: 3, name: "HORSE 03", odds: 2.5, color: 0xf57c00 },
+            { id: 4, name: "HORSE 04", odds: 3.2, color: 0xffa000 },
+            { id: 5, name: "HORSE 05", odds: 4.0, color: 0xffb300 },
+            { id: 6, name: "HORSE 06", odds: 5.0, color: 0x7cb342 },
+            { id: 7, name: "HORSE 07", odds: 6.0, color: 0x2e7d32 },
+            { id: 8, name: "HORSE 08", odds: 7.5, color: 0x00acc1 },
+            { id: 9, name: "HORSE 09", odds: 8.5, color: 0x1565c0 },
+            { id: 10, name: "HORSE 10", odds: 10.0, color: 0x283593 },
+            { id: 11, name: "HORSE 11", odds: 12.0, color: 0x4527a0 },
+            { id: 12, name: "HORSE 12", odds: 13.5, color: 0x7b1fa2 },
+            { id: 13, name: "HORSE 13", odds: 15.0, color: 0xad1457 }
+        ];
+ 
+        const STORAGE_KEY_BALANCE = 'egs_game_balance';
+        const STORAGE_KEY_FIRST_LAUNCH = 'pjc_3d_first_launch';
+        const ADMIN_PASSWORD = '198297';
+
+        let balance = 0;
+        let selectedHorse = horseList[2];
+        let currentBet = 0;
+        let isRacing = false;
+        let horses3D = [];
+        let raceWinner = null;
+        let camera, scene, renderer;
+        let trackLength = 200;
+        let is3DInitialized = false;
+
+       
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const selectedHorseDisplay = document.getElementById('selectedHorseDisplay');
+        const oddsDisplay = document.getElementById('oddsDisplay');
+        const potentialWinDisplay = document.getElementById('potentialWinDisplay');
+        const betInput = document.getElementById('betInput');
+        const horseGrid = document.getElementById('horseGrid');
+        const startRaceBtn = document.getElementById('startRaceBtn');
+        const addBalanceBtn = document.getElementById('addBalanceBtn');
+        const topBar = document.getElementById('topBar');
+        const bottomPanel = document.getElementById('bottomPanel');
+        const splash = document.getElementById('splash-screen');
+        const progress = document.getElementById('load-progress');
+        const raceStatusText = document.getElementById('raceStatusText');
+        const canvas = document.getElementById('gameCanvas');
+        const passwordModal = document.getElementById('passwordModal');
+        const amountModal = document.getElementById('amountModal');
+        const resultModal = document.getElementById('resultModal');
+        const managerModal = document.getElementById('managerModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const amountInput = document.getElementById('amountInput');
+        const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+        const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+        const amountCancelBtn = document.getElementById('amountCancelBtn');
+        const amountConfirmBtn = document.getElementById('amountConfirmBtn');
+        const resultConfirmBtn = document.getElementById('resultConfirmBtn');
+        const managerConfirmBtn = document.getElementById('managerConfirmBtn');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultContent = document.getElementById('resultContent');
+
+        function openModal(modal) {
+            modal.style.display = 'flex';
+            const input = modal.querySelector('input');
+            if (input) setTimeout(() => input.focus(), 100);
+        }
+
+        function closeModal(modal) {
+            modal.style.display = 'none';
+            const input = modal.querySelector('input');
+            if (input) input.value = '';
+        }
+
+        function isModalOpen() {
+            return [passwordModal, amountModal, resultModal, managerModal].some(modal => modal.style.display === 'flex');
+        }
+
+     
+        function roundNumber(num, decimal) {
+            return Math.round(num * Math.pow(10, decimal)) / Math.pow(10, decimal);
+        }
+
+        function safeParseNumber(str, defaultValue = 0) {
+            const num = parseFloat(str);
+            return (isNaN(num) || !isFinite(num)) ? defaultValue : num;
+        }
+
+    
+        function loadFromStorage() {
+            const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
+            balance = safeParseNumber(savedBalance, 0);
+            balance = roundNumber(balance, 2);
+        }
+
+        function saveToStorage() {
+            const safeBalance = isNaN(balance) || !isFinite(balance) ? 0 : roundNumber(balance, 2);
+            localStorage.setItem(STORAGE_KEY_BALANCE, safeBalance.toFixed(2));
+        }
+
+        function updateUI() {
+            if (isNaN(balance) || !isFinite(balance)) balance = 0;
+            const displayBalance = roundNumber(balance, 2);
+            balanceDisplay.innerText = `HK$${displayBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            
+            selectedHorseDisplay.innerText = selectedHorse.name;
+            oddsDisplay.innerText = `${selectedHorse.odds.toFixed(1)}x`;
+            
+            const bet = safeParseNumber(betInput.value, 0);
+            const potentialWin = roundNumber(bet * selectedHorse.odds, 2);
+            potentialWinDisplay.innerText = `HK$${potentialWin.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        }
+
+   
+        function renderHorseGrid() {
+            horseGrid.innerHTML = '';
+            horseList.forEach(horse => {
+                const chip = document.createElement('div');
+                chip.className = `horse-chip ${horse.id === selectedHorse.id ? 'selected' : ''}`;
+                chip.style.borderLeftColor = `#${horse.color.toString(16).padStart(6, '0')}`;
+                chip.style.borderLeftWidth = '3px';
+                chip.innerHTML = `
+                    <div>${horse.id}</div>
+                    <div class="odds">${horse.odds.toFixed(1)}x</div>
+                `;
+                chip.addEventListener('click', () => {
+                    selectedHorse = horse;
+                    renderHorseGrid();
+                    updateUI();
+                });
+                horseGrid.appendChild(chip);
+            });
+        }
+ 
+        function init3D() {
+            try {
+             
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x87CEEB);
+                scene.fog = new THREE.Fog(0x87CEEB, 100, 500);
+
+          
+                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+                camera.position.set(0, 40, 100);
+                camera.lookAt(0, 0, 0);
+
+             
+                renderer = new THREE.WebGLRenderer({ 
+                    canvas: canvas, 
+                    antialias: true,
+                    alpha: false,
+                    powerPreference: "high-performance"
+                });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+          
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(100, 200, 100);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.camera.left = -200;
+                directionalLight.shadow.camera.right = 200;
+                directionalLight.shadow.camera.top = 200;
+                directionalLight.shadow.camera.bottom = -200;
+                scene.add(directionalLight);
+
+            
+                createTrack();
+                createHorses();
+                window.addEventListener('resize', onWindowResize);
+                is3DInitialized = true;
+                animate();
+
+                console.log("3D Scene initialized successfully");
+            } catch (error) {
+                console.error("3D initialization failed:", error);
+                alert("WebGL initialization failed, please check your browser settings.");
+            }
+        }
+
+        function createTrack() {
+         
+            const groundGeometry = new THREE.PlaneGeometry(800, 400);
+            const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x7cb342, roughness: 0.8, metalness: 0.1 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+           
+            const trackGeometry = new THREE.PlaneGeometry(trackLength + 100, 80);
+            const trackMaterial = new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.6, metalness: 0.2 });
+            const track = new THREE.Mesh(trackGeometry, trackMaterial);
+            track.rotation.x = -Math.PI / 2;
+            track.position.y = 0.01;
+            track.receiveShadow = true;
+            scene.add(track);
+
+        
+            const lineGeometry = new THREE.PlaneGeometry(trackLength + 100, 0.5);
+            const lineMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+            
+            for (let i = -6; i <= 6; i++) {
+                const line = new THREE.Mesh(lineGeometry, lineMaterial);
+                line.rotation.x = -Math.PI / 2;
+                line.position.set(0, 0.02, i * 5);
+                scene.add(line);
+            }
+
+        
+            const finishGeometry = new THREE.PlaneGeometry(0.5, 80);
+            const finishMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.5 });
+            const finishLine = new THREE.Mesh(finishGeometry, finishMaterial);
+            finishLine.rotation.x = -Math.PI / 2;
+            finishLine.position.set(trackLength / 2, 0.02, 0);
+            scene.add(finishLine);
+
+        
+            const startGeometry = new THREE.PlaneGeometry(0.5, 80);
+            const startMaterial = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.5 });
+            const startLine = new THREE.Mesh(startGeometry, startMaterial);
+            startLine.rotation.x = -Math.PI / 2;
+            startLine.position.set(-trackLength / 2, 0.02, 0);
+            scene.add(startLine);
+        }
+
+        function createHorses() {
+            horses3D = [];
+            const startX = -trackLength / 2 + 10;
+
+            horseList.forEach((horse, index) => {
+        
+                const bodyGeometry = new THREE.CapsuleGeometry(1.2, 3, 4, 8);
+                const bodyMaterial = new THREE.MeshStandardMaterial({ color: horse.color, roughness: 0.5, metalness: 0.2 });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.castShadow = true;
+                body.receiveShadow = true;
+
+               
+                const headGeometry = new THREE.BoxGeometry(1, 1, 1.5);
+                const headMaterial = new THREE.MeshStandardMaterial({ color: horse.color, roughness: 0.5, metalness: 0.2 });
+                const head = new THREE.Mesh(headGeometry, headMaterial);
+                head.position.set(0, 1, 2.5);
+                head.castShadow = true;
+
+             
+                const horseGroup = new THREE.Group();
+                horseGroup.add(body);
+                horseGroup.add(head);
+
+             
+                horseGroup.position.set(startX, 2, (index - 6) * 5);
+                horseGroup.rotation.y = Math.PI / 2;
+
+        
+                scene.add(horseGroup);
+                horses3D.push({
+                    group: horseGroup,
+                    data: horse,
+                    x: startX,
+                    baseSpeed: 0.4 + Math.random() * 0.3,
+                    finished: false
+                });
+            });
+        }
+
+        function resetHorses() {
+            const startX = -trackLength / 2 + 10;
+            horses3D.forEach((horse3D, index) => {
+                horse3D.x = startX;
+                horse3D.group.position.x = startX;
+                horse3D.finished = false;
+                horse3D.baseSpeed = 0.4 + Math.random() * 0.3;
+            });
+            raceWinner = null;
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isRacing && is3DInitialized) {
+                updateRace();
+            }
+ 
+            if (isRacing && horses3D.length > 0 && is3DInitialized) {
+                const leadHorse = horses3D.reduce((a, b) => a.x > b.x ? a : b);
+                camera.position.x = leadHorse.group.position.x - 40;
+                camera.position.z = 80;
+                camera.lookAt(leadHorse.group.position.x, 10, 0);
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function updateRace() {
+            let allFinished = true;
+
+            horses3D.forEach(horse3D => {
+                if (!horse3D.finished) {
+                    allFinished = false;
+                 
+                    const speedVariation = 0.6 + Math.random() * 1.4;
+                    horse3D.x += horse3D.baseSpeed * speedVariation;
+                    horse3D.group.position.x = horse3D.x;
+
+              
+                    if (horse3D.x >= trackLength / 2 && !raceWinner) {
+                        raceWinner = horse3D.data;
+                        horse3D.finished = true;
+                        showRaceStatus("FINISH!");
+                        setTimeout(() => endRace(), 1500);
+                    }
+                }
+            });
+        }
+
+        function showRaceStatus(text) {
+            raceStatusText.innerText = text;
+            raceStatusText.classList.add('show');
+            setTimeout(() => {
+                raceStatusText.classList.remove('show');
+            }, 1000);
+        }
+
+       
+        function startRace() {
+            if (!is3DInitialized) {
+                alert("3D scene not initialized yet!");
+                return;
+            }
+
+            const bet = safeParseNumber(betInput.value, 0);
+            if (bet > balance || bet <= 0) {
+                alert("Insufficient balance to start race!");
+                return;
+            }
+
+         
+            currentBet = bet;
+            balance -= bet;
+            balance = roundNumber(balance, 2);
+            saveToStorage();
+            updateUI();
+ 
+            bottomPanel.style.display = 'none';
+
+   
+            resetHorses();
+
+     
+            showRaceStatus("3");
+            setTimeout(() => showRaceStatus("2"), 1000);
+            setTimeout(() => showRaceStatus("1"), 2000);
+            setTimeout(() => {
+                showRaceStatus("GO!");
+                isRacing = true;
+            }, 3000);
+        }
+
+        function endRace() {
+            isRacing = false;
+
+    
+            const isWin = raceWinner.id === selectedHorse.id;
+            if (isWin) {
+                const winAmount = roundNumber(currentBet * raceWinner.odds, 2);
+                balance += winAmount;
+                resultTitle.innerText = "CONGRATULATIONS!";
+                resultContent.innerText = `${raceWinner.name} won the race!\nYou won HK$${winAmount.toFixed(2)} at ${raceWinner.odds.toFixed(1)}x odds!`;
+            } else {
+                resultTitle.innerText = "RACE LOST";
+                resultContent.innerText = `${raceWinner.name} won the race.\nYour horse ${selectedHorse.name} finished out of the money.\nYou lost HK$${currentBet.toFixed(2)}.`;
+            }
+
+            saveToStorage();
+            updateUI();
+            openModal(resultModal);
+        }
+
+      
+        addBalanceBtn.onclick = () => openModal(passwordModal);
+        passwordCancelBtn.onclick = () => closeModal(passwordModal);
+        amountCancelBtn.onclick = () => closeModal(amountModal);
+        passwordConfirmBtn.onclick = () => {
+            if (passwordInput.value.trim() !== ADMIN_PASSWORD) {
+                alert("Incorrect admin password!");
+                closeModal(passwordModal);
+                return;
+            }
+            closeModal(passwordModal);
+            openModal(amountModal);
+        };
+        amountConfirmBtn.onclick = () => {
+            const inputAmount = safeParseNumber(amountInput.value.trim(), 0);
+            if (isNaN(inputAmount) || inputAmount <= 0) {
+                alert("Please enter a valid positive number!");
+                return;
+            }
+            balance += inputAmount;
+            balance = roundNumber(balance, 2);
+            saveToStorage();
+            updateUI();
+            closeModal(amountModal);
+        };
+
+ 
+        startRaceBtn.onclick = startRace;
+        resultConfirmBtn.onclick = () => {
+            closeModal(resultModal);
+            bottomPanel.style.display = 'flex';
+       
+            if (camera) {
+                camera.position.set(0, 40, 100);
+                camera.lookAt(0, 0, 0);
+            }
+            resetHorses();
+        };
+
+ 
+        betInput.addEventListener('input', updateUI);
+
+  
+        managerConfirmBtn.onclick = () => {
+            closeModal(managerModal);
+            localStorage.setItem(STORAGE_KEY_FIRST_LAUNCH, 'false');
+        };
+
+ 
+        window.onload = () => {
+        
+            setTimeout(() => { progress.style.width = '100%'; }, 1000);
+            setTimeout(() => {
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+               
+                    loadFromStorage();
+    
+                    init3D();
+                    
+             
+                    renderHorseGrid();
+                    updateUI();
+                    
+            
+                    topBar.classList.remove('hidden');
+                    bottomPanel.classList.remove('hidden');
+                    
+                 
+                    const isFirstLaunch = localStorage.getItem(STORAGE_KEY_FIRST_LAUNCH) !== 'false';
+                    if (isFirstLaunch) {
+                        setTimeout(() => openModal(managerModal), 500);
+                    }
+
+                    console.log("Game initialized successfully");
+                }, 1000);
+            }, 5800);  
+        };
+    </script>
+</body>
+</html>
