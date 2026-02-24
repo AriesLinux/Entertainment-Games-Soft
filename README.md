@@ -5,9 +5,9 @@
 
 <br><br><br>
 <img src="https://github.com/AriesLinux/Entertainment-Games-Soft/blob/main/Suituo%20Technology%20(Macau)%20%20LOGO.png" width="500" alt="Suituo（Macau）Logo">
-<br><br><br>
+<br><br>
 
-<br><br><br>
+<br>
 <img src="https://github.com/AriesLinux/Entertainment-Games-Soft/blob/main/DHC%20LOGO.png" width="500" alt="DHC Logo">
 <br><br><br>
 
