@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Miner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --primary: #2e7d32;
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
+            --loss: #d32f2f;
+            --win: #2e7d32;
+            --bomb: #9e9e9e;
+            --allen: #7b1fa2;
+            --mask: rgba(0, 0, 0, 0.6);
+        }
+
+     
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--mask);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: var(--card);
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 360px;
+            border: 1px solid var(--border);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .modal-desc {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0 0 18px 0;
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            width: 100%;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.85rem;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: var(--text);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm {
+            background: var(--text);
+            color: #fff;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+     
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease;
+        }
+
+        #splash-screen img {
+            width: 400px;
+            height: auto;
+            margin-bottom: 25px;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-bar {
+            width: 180px;
+            height: 3px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: #000;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+  
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 30px;
+            border: 1px solid var(--border);
+            max-width: 1100px;
+            width: 100%;
+        }
+
+       
+        .card-grid-wrapper {
+            flex: 1;
+            min-width: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            background: #f9f9fb;
+            border-radius: 16px;
+            border: 1px solid #eee;
+        }
+
+        .card-grid {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+            max-width: 480px;
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .card-item {
+            aspect-ratio: 3/4;
+            position: relative;
+            cursor: pointer;
+            perspective: 1000px;
+        }
+        .card-item.disabled { cursor: not-allowed; }
+        .card-item.flipped { pointer-events: none; }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 10px;
+        }
+        .card-item.flipped .card-inner { transform: rotateY(180deg); }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            flex-direction: column;
+            gap: 8px;
+        }
+ 
+        .card-back {
+            background: var(--text);
+            color: #fff;
+            border: 3px solid #333;
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+ 
+        .card-front {
+            background: #fff;
+            border: 3px solid var(--border);
+            transform: rotateY(180deg);
+        }
+        
+        .prize-icon {
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+        
+        .prize-name {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+        }
+        
+        .prize-reward {
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+    
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            min-width: 280px;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        h2 { 
+            margin: 0; 
+            color: var(--text); 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            letter-spacing: -1.5px;
+            text-transform: uppercase;
+        }
+        
+        .stat-box {
+            background: #f9f9fb;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .add-balance-btn {
+            background: var(--text);
+            color: #fff;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+            z-index: 10;
+        }
+        .add-balance-btn:hover { background: #333; transform: translateY(-1px); }
+        .add-balance-btn:active { transform: translateY(0); }
+
+        input {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .stat-item {
+            background: #f9f9fb;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.65rem;
+            color: #888;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .stat-value.winnings {
+            color: var(--win);
+        }
+
+        button {
+            background: var(--text);
+            color: #ffffff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        button:hover { background: #333; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button.disabled { background: #aaa; cursor: not-allowed; transform: none; }
+        button.cashout { background: var(--win); }
+        button.cashout:hover { background: #1b5e20; }
+        button.cashout:disabled { background: #aaa; }
+
+        .log {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.7rem;
+            height: 120px;
+            overflow-y: auto;
+            background: #f9f9fb;
+            padding: 10px;
+            border-radius: 8px;
+            color: #444;
+            border: 1px solid #eee;
+            line-height: 1.4;
+        }
+
+        .header { text-align: center; margin-bottom: 20px; }
+
+        .rule-desc {
+            background: #f9f9fb;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            font-size: 0.7rem;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+       
+        .prize-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: #f9f9fb;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .prize-list-title {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .prize-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+        .prize-list-icon {
+            margin-right: 8px;
+            display: inline-block;
+            width: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+ 
+    <div class="modal-mask" id="passwordModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Admin Verification</h3>
+            <p class="modal-desc">Enter admin password to add balance</p>
+            <input type="password" class="modal-input" id="passwordInput" placeholder="Enter password" maxlength="6">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="passwordCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="passwordConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+ 
+    <div class="modal-mask" id="amountModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Add Balance</h3>
+            <p class="modal-desc">Enter the amount to add to your balance</p>
+            <input type="number" class="modal-input" id="amountInput" placeholder="Enter amount (HK$)" min="1" step="1">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="amountCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="amountConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+  
+    <div class="modal-mask" id="alertModal">
+        <div class="modal-card">
+            <h3 class="modal-title" id="alertTitle">Notice</h3>
+            <p class="modal-desc" id="alertContent"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" id="alertConfirmBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+   
+    <div id="splash-screen">
+        <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="Logo">
+        <div class="loading-bar">
+            <div class="loading-progress" id="load-progress"></div>
+        </div>
+    </div>
+
+    
+    <div class="header">
+        <h2>Lucky Miner</h2>
+        <div style="color: #888; font-size: 0.8rem; margin-top: 4px; font-weight: 500;">ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
+    </div>
+
+    <div class="container">
+       
+        <div class="card-grid-wrapper">
+            <div id="cardGrid" class="card-grid"></div>
+        </div>
+
+      
+        <div class="controls">
+            <div class="stat-box">
+                <div>
+                    <div style="font-size: 0.7rem; color: #888; font-weight: 600; margin-bottom: 4px;">CURRENT BALANCE</div>
+                    <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
+                </div>
+                <button id="addBalanceBtn" class="add-balance-btn">+</button>
+            </div>
+
+           
+            <div class="game-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Current Winnings</div>
+                    <div class="stat-value winnings" id="winningsDisplay">HK$0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Safe Cards Flipped</div>
+                    <div class="stat-value" id="cardCountDisplay">0</div>
+                </div>
+            </div>
+
+           
+            <div class="prize-list">
+                <div class="prize-list-title">PRIZE POOL</div>
+                <div class="prize-list-item">
+                    <span><span class="prize-list-icon">❌</span>Empty (Bust)</span>
+                    <span>HK$0</span>
+                </div>
+                <div class="prize-list-item">
+                    <span><span class="prize-list-icon">🟤</span>Copper Coin</span>
+                    <span>HK$50</span>
+                </div>
+                <div class="prize-list-item">
+                    <span><span class="prize-list-icon">⚪</span>Silver Coin</span>
+                    <span>HK$500</span>
+                </div>
+                <div class="prize-list-item">
+                    <span><span class="prize-list-icon">🟡</span>Gold Coin</span>
+                    <span>HK$5,000</span>
+                </div>
+                <div class="prize-list-item">
+                    <span><span class="prize-list-icon">💎</span>Diamond</span>
+                    <span>HK$500,000</span>
+                </div>
+                <div class="prize-list-item">
+                    <span><span class="prize-list-icon">💳</span>AMEX Black</span>
+                    <span>HK$10,000,000</span>
+                </div>
+            </div>
+
+          
+            <button id="startBtn">Start Game (HK$200)</button>
+            <button id="cashoutBtn" class="cashout" disabled>Cash Out</button>
+            <button id="resetBtn" disabled>Reset Game</button>
+
+         
+            <div class="rule-desc">
+                <strong>Rules:</strong><br>
+                • Cost per game: HK$200<br>
+                • Flip reward cards to accumulate winnings<br>
+                • Hit Empty card: BUST, lose all winnings, game over<br>
+                • Cash out anytime to lock your winnings<br>
+                • All cards will be revealed when game ends
+            </div>
+
+           
+            <div class="log" id="gameLog">
+                [SYSTEM]: Lucky Miner Engine Ready.<br>
+                [SYSTEM]: Local Storage Enabled.<br>
+            </div>
+        </div>
+    </div>
+
+<script>
+ 
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, type, duration, vol = 0.1) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    const soundFlip = () => playSound(440, 'sine', 0.1, 0.03);
+    const soundSafe = (level) => {
+        const baseFreq = 400 + (level * 100);
+        playSound(baseFreq, 'triangle', 0.15, 0.05);
+        setTimeout(() => playSound(baseFreq * 1.25, 'triangle', 0.15, 0.05), 100);
+        if (level > 3) {
+            setTimeout(() => playSound(baseFreq * 1.5, 'triangle', 0.2, 0.05), 200);
+        }
+    };
+    const soundBust = () => {
+        playSound(200, 'sawtooth', 0.2, 0.08);
+        setTimeout(() => playSound(100, 'sawtooth', 0.3, 0.08), 150);
+    };
+    const soundCashout = () => {
+        playSound(523.25, 'sine', 0.2, 0.08);
+        setTimeout(() => playSound(659.25, 'sine', 0.2, 0.08), 100);
+        setTimeout(() => playSound(783.99, 'sine', 0.3, 0.08), 200);
+    };
+    const soundStart = () => playSound(400, 'sine', 0.1, 0.05);
+    const soundSuccess = () => playSound(800, 'sine', 0.15, 0.08);
+    const soundError = () => playSound(200, 'square', 0.2, 0.05);
+    const GAME_COST = 200;
+    const TOTAL_CARDS = 6;
+    const BOMB_COUNT = 3;
+    const STORAGE_KEY_BALANCE = 'egs_game_balance';
+    const STORAGE_KEY_GAMES = 'damn_allen_total_games';
+    const ADMIN_PASSWORD = '198297';
+
+ 
+    const prizeConfig = [
+        { id: 'empty', name: 'Empty', reward: 0, color: '#9e9e9e', icon: '❌', isBomb: true },
+        { id: 'copper', name: 'Copper Coin', reward: 50, color: '#cd7f32', icon: '🟤', isBomb: false, level: 1, weight: 68989 },
+        { id: 'silver', name: 'Silver Coin', reward: 500, color: '#c0c0c0', icon: '⚪', isBomb: false, level: 2, weight: 30000 },
+        { id: 'gold', name: 'Gold Coin', reward: 5000, color: '#ffd700', icon: '🟡', isBomb: false, level: 3, weight: 1000 },
+        { id: 'diamond', name: 'Diamond', reward: 500000, color: '#b9f2ff', icon: '💎', isBomb: false, level: 4, weight: 10 },
+        { id: 'blackcard', name: 'AMEX Black', reward: 10000000, color: '#1a1a1a', icon: '💳', isBomb: false, level: 5, weight: 1 }
+    ];
+
+     
+    let balance = 0;
+    let totalGames = 0;
+    let isPlaying = false;
+    let currentWinnings = 0;
+    let safeFlippedCount = 0;
+    let cardList = [];
+
+
+    const cardGrid = document.getElementById('cardGrid');
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const winningsDisplay = document.getElementById('winningsDisplay');
+    const cardCountDisplay = document.getElementById('cardCountDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const cashoutBtn = document.getElementById('cashoutBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const addBalanceBtn = document.getElementById('addBalanceBtn');
+    const gameLog = document.getElementById('gameLog');
+    const splash = document.getElementById('splash-screen');
+    const progress = document.getElementById('load-progress');
+    const passwordModal = document.getElementById('passwordModal');
+    const amountModal = document.getElementById('amountModal');
+    const alertModal = document.getElementById('alertModal');
+    const passwordInput = document.getElementById('passwordInput');
+    const amountInput = document.getElementById('amountInput');
+    const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+    const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+    const amountCancelBtn = document.getElementById('amountCancelBtn');
+    const amountConfirmBtn = document.getElementById('amountConfirmBtn');
+    const alertConfirmBtn = document.getElementById('alertConfirmBtn');
+    const alertTitle = document.getElementById('alertTitle');
+    const alertContent = document.getElementById('alertContent');
+
+    function openModal(modal) {
+        modal.style.display = 'flex';
+        const input = modal.querySelector('input');
+        if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeModal(modal) {
+        modal.style.display = 'none';
+        const input = modal.querySelector('input');
+        if (input) input.value = '';
+    }
+
+    function showAlert(title, content) {
+        alertTitle.innerText = title;
+        alertContent.innerText = content;
+        openModal(alertModal);
+    }
+
+   
+    passwordConfirmBtn.onclick = () => {
+        const inputPwd = passwordInput.value.trim();
+        if (inputPwd !== ADMIN_PASSWORD) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Incorrect admin password.</span>");
+            closeModal(passwordModal);
+            showAlert("Access Denied", "Incorrect admin password!");
+            return;
+        }
+        soundSuccess();
+        closeModal(passwordModal);
+        openModal(amountModal);
+    };
+
+    amountConfirmBtn.onclick = () => {
+        const inputAmount = parseFloat(amountInput.value.trim());
+        if (isNaN(inputAmount) || inputAmount <= 0 || !isFinite(inputAmount)) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Invalid amount entered.</span>");
+            showAlert("Invalid Input", "Please enter a valid positive number!");
+            return;
+        }
+        balance += inputAmount;
+        balance = Math.round(balance * 100) / 100;
+        saveToStorage();
+        updateUI();
+        soundSuccess();
+        addLog(`<span style='color:#2e7d32; font-weight:700;'>SUCCESS: Added HK$${inputAmount.toLocaleString(undefined, {minimumFractionDigits: 2})} to balance.</span>`);
+        closeModal(amountModal);
+    };
+
+    passwordCancelBtn.onclick = () => closeModal(passwordModal);
+    amountCancelBtn.onclick = () => closeModal(amountModal);
+    alertConfirmBtn.onclick = () => closeModal(alertModal);
+    [passwordInput, amountInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') e.target.closest('.modal-card').querySelector('.modal-btn-confirm').click();
+        });
+    });
+    [passwordModal, amountModal, alertModal].forEach(modal => {
+        modal.addEventListener('click', (e) => e.target === modal && closeModal(modal));
+    });
+    addBalanceBtn.onclick = () => openModal(passwordModal);
+
+    
+    function loadFromStorage() {
+        const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
+        const savedGames = localStorage.getItem(STORAGE_KEY_GAMES);
+        
+        balance = parseFloat(savedBalance) || 0;
+        totalGames = parseFloat(savedGames) || 0;
+        
+        balance = Math.round(balance * 100) / 100;
+    }
+
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEY_BALANCE, balance.toFixed(2));
+        localStorage.setItem(STORAGE_KEY_GAMES, Math.floor(totalGames).toString());
+    }
+
+    function updateUI() {
+        balanceDisplay.innerText = `HK$${balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        winningsDisplay.innerText = `HK$${currentWinnings.toLocaleString()}`;
+        cardCountDisplay.innerText = safeFlippedCount;
+        
+        startBtn.disabled = isPlaying || balance < GAME_COST;
+        cashoutBtn.disabled = !isPlaying || safeFlippedCount === 0;
+        resetBtn.disabled = !isPlaying;
+    }
+
+    function addLog(msg) {
+        const entry = document.createElement('div');
+        entry.style.marginBottom = "4px";
+        entry.innerHTML = `<span style="color: #bbb;">#</span> ${msg}`;
+        gameLog.prepend(entry);
+        gameLog.scrollTop = 0;
+    }
+
+  
+    function getRandomRewardPrize() {
+        const rewardPrizes = prizeConfig.filter(prize => !prize.isBomb);
+        const totalWeight = rewardPrizes.reduce((sum, prize) => sum + prize.weight, 0);
+        let random = Math.random() * totalWeight;
+        
+        for (const prize of rewardPrizes) {
+            if (random < prize.weight) {
+                return prize;
+            }
+            random -= prize.weight;
+        }
+        return rewardPrizes[0];
+    }
+
+    function generateCards() {
+        cardList = [];
+        const bombArray = new Array(BOMB_COUNT).fill(prizeConfig[0]);
+        const rewardArray = [];
+        for (let i = 0; i < TOTAL_CARDS - BOMB_COUNT; i++) {
+            rewardArray.push(getRandomRewardPrize());
+        }
+        const allCards = [...bombArray, ...rewardArray];
+        allCards.sort(() => Math.random() - 0.5);
+        
+        allCards.forEach((prize, index) => {
+            cardList.push({
+                id: index,
+                prize: prize,
+                flipped: false
+            });
+        });
+    }
+
+    function renderCards() {
+        cardGrid.innerHTML = '';
+
+        cardList.forEach(card => {
+            const cardItem = document.createElement('div');
+            cardItem.className = `card-item ${card.flipped ? 'flipped' : ''} ${!isPlaying || card.flipped ? 'disabled' : ''}`;
+            cardItem.dataset.id = card.id;
+
+            const frontStyle = `background: ${card.prize.color}; border-color: ${card.prize.color}; color: #fff;`;
+
+            cardItem.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-back">MINING</div>
+                    <div class="card-front" style="${frontStyle}">
+                        <div class="prize-icon">${card.prize.icon}</div>
+                        <div class="prize-name">${card.prize.name}</div>
+                        <div class="prize-reward">HK$${card.prize.reward.toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+
+            cardItem.addEventListener('click', () => {
+                if (!isPlaying || card.flipped) return;
+                flipCard(card.id);
+            });
+
+            cardGrid.appendChild(cardItem);
+        });
+    }
+
+    function flipAllCards() {
+        cardList.forEach(card => {
+            card.flipped = true;
+        });
+        renderCards();
+    }
+
+ 
+    function flipCard(cardId) {
+        const card = cardList.find(item => item.id === cardId);
+        if (!card || card.flipped) return;
+
+        card.flipped = true;
+        soundFlip();
+        renderCards();
+
+        if (card.prize.isBomb) {
+            soundBust();
+            flipAllCards();
+            currentWinnings = 0;
+            addLog(`<span style='color:#d32f2f; font-weight:700;'>BUST! Hit Empty Card. Lost all winnings. Game Over.</span>`);
+            showAlert("BUST!", "You hit the Empty Card!\nYou lost all your winnings for this round.");
+            endGame(false);
+            return;
+        }
+
+        if (!card.prize.isBomb) {
+            safeFlippedCount++;
+            currentWinnings += card.prize.reward;
+            currentWinnings = Math.round(currentWinnings * 100) / 100;
+            soundSafe(card.prize.level);
+            addLog(`Flipped ${card.prize.name}! +HK$${card.prize.reward.toLocaleString()} | Total Winnings: HK$${currentWinnings.toLocaleString()}`);
+            updateUI();
+
+            const totalSafeCards = TOTAL_CARDS - BOMB_COUNT;
+            if (safeFlippedCount >= totalSafeCards) {
+                addLog(`<span style='color:#2e7d32; font-weight:700;'>All safe cards flipped! Auto cash out.</span>`);
+                cashout();
+            }
+        }
+    }
+
+  
+    function cashout() {
+        if (!isPlaying || safeFlippedCount === 0) return;
+        
+        const finalWinnings = Math.round(currentWinnings * 100) / 100;
+        balance += finalWinnings;
+        balance = Math.round(balance * 100) / 100;
+        
+        soundCashout();
+        flipAllCards();
+        addLog(`<span style='color:#2e7d32; font-weight:700;'>CASH OUT SUCCESS! Locked HK$${finalWinnings.toLocaleString()}</span>`);
+        showAlert("CASH OUT SUCCESS!", `You locked in HK$${finalWinnings.toLocaleString()}!\nAll cards have been revealed.`);
+        endGame(true);
+    }
+
+    
+    startBtn.onclick = () => {
+        if (balance < GAME_COST) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Insufficient Funds.</span>");
+            showAlert("Error", "Insufficient balance to start game!");
+            return;
+        }
+
+        balance -= GAME_COST;
+        totalGames++;
+        balance = Math.round(balance * 100) / 100;
+
+        isPlaying = true;
+        currentWinnings = 0;
+        safeFlippedCount = 0;
+
+        generateCards();
+        renderCards();
+        saveToStorage();
+        updateUI();
+
+        soundStart();
+        addLog(`<span style='font-weight:700;'>GAME STARTED</span> | Stake: HK$${GAME_COST} | Good luck!`);
+    };
+
+    cashoutBtn.onclick = cashout;
+
+    resetBtn.onclick = () => {
+        isPlaying = false;
+        currentWinnings = 0;
+        safeFlippedCount = 0;
+
+        generateCards();
+        renderCards();
+        updateUI();
+
+        addLog(`<span style='font-weight:700;'>GAME RESET</span>`);
+    };
+
+    function endGame(isWin) {
+        isPlaying = false;
+        saveToStorage();
+        updateUI();
+    }
+
+   
+    window.onload = () => {
+        setTimeout(() => { progress.style.width = '100%'; }, 200);
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.visibility = 'hidden';
+                loadFromStorage();
+                updateUI();
+                generateCards();
+                renderCards();
+                addLog(`System initialized. Lucky Miner ready.`);
+            }, 1000);
+        }, 2800);
+    };
+</script>
+</body>
+</html>
