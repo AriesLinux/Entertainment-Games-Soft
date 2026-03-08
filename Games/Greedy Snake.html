@@ -395,6 +395,20 @@
             text-align: center;
             margin-top: -10px;
         }
+
+       
+        .food-counter {
+            background: #f9f9fb;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+        .food-counter span {
+            font-weight: 700;
+            color: var(--gold);
+        }
     </style>
 </head>
 <body>
@@ -447,7 +461,7 @@
     
     <div class="header">
         <h2>Greedy Snake</h2>
-        <div style="color: #888; font-size: 0.8rem; margin-top: 4px; font-weight: 500;">贪财蛇 | ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
+        <div style="color: #888; font-size: 0.8rem; margin-top: 4px; font-weight: 500;">ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
     </div>
 
   
@@ -479,6 +493,11 @@
                 </div>
             </div>
 
+            
+            <div class="food-counter" id="foodCounter">
+                Eaten Food: <span id="eatenFoodCount">0</span> / <span id="requiredFoodCount">3</span> (Minimum for Cash Out)
+            </div>
+
            
             <div class="difficulty-selector">
                 <label class="difficulty-label">DIFFICULTY LEVEL</label>
@@ -487,21 +506,21 @@
                         <input type="radio" name="difficulty" id="easy" value="easy" checked>
                         <label for="easy">
                             <span>EASY</span>
-                            <span>SLOW</span>
+                            <span>SLOW (3 FOOD)</span>
                         </label>
                     </div>
                     <div class="difficulty-option">
                         <input type="radio" name="difficulty" id="medium" value="medium">
                         <label for="medium">
                             <span>MEDIUM</span>
-                            <span>MEDIUM</span>
+                            <span>MEDIUM (6 FOOD)</span>
                         </label>
                     </div>
                     <div class="difficulty-option">
                         <input type="radio" name="difficulty" id="hard" value="hard">
                         <label for="hard">
                             <span>HARD</span>
-                            <span>FAST</span>
+                            <span>FAST (9 FOOD)</span>
                         </label>
                     </div>
                 </div>
@@ -524,6 +543,9 @@
             
             <div class="rule-desc">
                 <strong>Rules:</strong><br>
+                • Easy: Eat 3 food to unlock Cash Out & multiplier<br>
+                • Medium: Eat 6 food to unlock Cash Out & multiplier<br>
+                • Hard: Eat 9 food to unlock Cash Out & multiplier<br>
                 • Eat green food: +small multiplier<br>
                 • Eat gold cash food: +big multiplier<br>
                 • Hit wall/self: lose all stake<br>
@@ -577,6 +599,10 @@
     const soundSuccess = () => playSound(800, 'sine', 0.15, 0.08);
     const soundError = () => playSound(200, 'square', 0.2, 0.05);
     const soundSwitch = () => playSound(300, 'sine', 0.15, 0.05);
+    const soundUnlock = () => {
+        playSound(700, 'sine', 0.2, 0.08);
+        setTimeout(() => playSound(900, 'sine', 0.2, 0.08), 100);
+    };
 
     
     const difficultyConfig = {
@@ -585,21 +611,24 @@
             speed: 150,  
             normalMultiplier: 0.2,
             goldMultiplier: 1,
-            gridSize: 20
+            gridSize: 20,
+            minFood: 3
         },
         medium: {
             name: "MEDIUM",
             speed: 100,
             normalMultiplier: 0.5,
             goldMultiplier: 2,
-            gridSize: 20
+            gridSize: 20,
+            minFood: 6
         },
         hard: {
             name: "HARD",
             speed: 60,
             normalMultiplier: 1,
             goldMultiplier: 5,
-            gridSize: 20
+            gridSize: 20,
+            minFood: 9
         }
     };
 
@@ -607,7 +636,7 @@
     const STORAGE_KEY_BALANCE = 'egs_game_balance';
     const STORAGE_KEY_GAMES = 'greedy_snake_total_games';
     const ADMIN_PASSWORD = '198297';
-
+ 
     let balance = 0;
     let totalGames = 0;
     let isPlaying = false;
@@ -622,8 +651,12 @@
     let isGoldFood = false;
     let gameLoop = null;
     let canvas, ctx;
+    let eatenFoodCount = 0;
+    let isUnlocked = false;
 
-     
+ 
+    const eatenFoodCountDisplay = document.getElementById('eatenFoodCount');
+    const requiredFoodCountDisplay = document.getElementById('requiredFoodCount');
     const balanceDisplay = document.getElementById('balanceDisplay');
     const multiplierDisplay = document.getElementById('multiplierDisplay');
     const lengthDisplay = document.getElementById('lengthDisplay');
@@ -637,8 +670,6 @@
     const splash = document.getElementById('splash-screen');
     const progress = document.getElementById('load-progress');
     const allModals = document.querySelectorAll('.modal-mask');
-
-     
     const passwordModal = document.getElementById('passwordModal');
     const amountModal = document.getElementById('amountModal');
     const alertModal = document.getElementById('alertModal');
@@ -670,7 +701,6 @@
         openModal(alertModal);
     }
 
-     
     function isModalOpen() {
         return Array.from(allModals).some(modal => modal.style.display === 'flex');
     }
@@ -690,7 +720,6 @@
         openModal(amountModal);
     };
 
-  
     amountConfirmBtn.onclick = () => {
         const inputAmount = safeParseNumber(amountInput.value.trim(), 0);
         if (isNaN(inputAmount) || inputAmount <= 0 || !isFinite(inputAmount)) {
@@ -708,7 +737,6 @@
         closeModal(amountModal);
     };
 
-   
     passwordCancelBtn.onclick = () => closeModal(passwordModal);
     amountCancelBtn.onclick = () => closeModal(amountModal);
     alertConfirmBtn.onclick = () => closeModal(alertModal);
@@ -722,7 +750,7 @@
     });
     addBalanceBtn.onclick = () => openModal(passwordModal);
 
- 
+  
     function roundNumber(num, decimal) {
         return Math.round(num * Math.pow(10, decimal)) / Math.pow(10, decimal);
     }
@@ -732,7 +760,7 @@
         return (isNaN(num) || !isFinite(num)) ? defaultValue : num;
     }
 
-    
+   
     function loadFromStorage() {
         const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
         const savedGames = localStorage.getItem(STORAGE_KEY_GAMES);
@@ -747,14 +775,20 @@
         localStorage.setItem(STORAGE_KEY_GAMES, Math.floor(totalGames).toString());
     }
 
+   
     function updateUI() {
         if (isNaN(balance) || !isFinite(balance)) balance = 0;
         const displayBalance = roundNumber(balance, 2);
         balanceDisplay.innerText = `HK$${displayBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         
-        const displayMultiplier = roundNumber(currentMultiplier, 1);
+        const displayMultiplier = isUnlocked ? roundNumber(currentMultiplier, 1) : 1.0;
         multiplierDisplay.innerText = `${displayMultiplier}x`;
         lengthDisplay.innerText = snake.length;
+        
+        if (eatenFoodCountDisplay) eatenFoodCountDisplay.textContent = eatenFoodCount;
+        if (requiredFoodCountDisplay) requiredFoodCountDisplay.textContent = currentDifficulty.minFood;
+        
+        cashoutBtn.disabled = !isPlaying || !isUnlocked || isCountingDown;
     }
 
     function addLog(msg) {
@@ -765,11 +799,18 @@
         gameLog.scrollTop = 0;
     }
 
-   
+     
     function initGame() {
         canvas = document.getElementById('gameCanvas');
         ctx = canvas.getContext('2d');
         drawInitialScreen();
+        updateRequiredFoodDisplay();
+    }
+
+    function updateRequiredFoodDisplay() {
+        if (requiredFoodCountDisplay) {
+            requiredFoodCountDisplay.textContent = currentDifficulty.minFood;
+        }
     }
 
     function drawInitialScreen() {
@@ -781,22 +822,7 @@
         ctx.fillText('Press START to play', canvas.width / 2, canvas.height / 2);
     }
 
- 
-    function drawCountdown(count) {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#1d1d1f';
-        ctx.font = 'bold 80px -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(count > 0 ? count : 'GO', canvas.width / 2, canvas.height / 2);
-        if (count > 0) {
-            ctx.font = '20px -apple-system, sans-serif';
-            ctx.fillText('Get Ready!', canvas.width / 2, canvas.height / 2 + 60);
-        }
-    }
-
-    
+  
     async function startCountdown() {
         isCountingDown = true;
         let count = 3;
@@ -821,6 +847,20 @@
         drawGame();
     }
 
+    function drawCountdown(count) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#1d1d1f';
+        ctx.font = 'bold 80px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(count > 0 ? count : 'GO', canvas.width / 2, canvas.height / 2);
+        if (count > 0) {
+            ctx.font = '20px -apple-system, sans-serif';
+            ctx.fillText('Get Ready!', canvas.width / 2, canvas.height / 2 + 60);
+        }
+    }
+ 
     function resetSnake() {
         const gridSize = currentDifficulty.gridSize;
         const startX = Math.floor(canvas.width / gridSize / 2);
@@ -833,9 +873,12 @@
         direction = { x: 1, y: 0 };
         nextDirection = { x: 1, y: 0 };
         currentMultiplier = 1;
+        eatenFoodCount = 0;
+        isUnlocked = false;
         spawnFood();
     }
 
+    
     function spawnFood() {
         const gridSize = currentDifficulty.gridSize;
         const maxX = Math.floor(canvas.width / gridSize);
@@ -852,25 +895,20 @@
         }
         
         food = newFood;
-        isGoldFood = Math.random() < 0.15;  
+        isGoldFood = Math.random() < 0.15;
     }
 
+     
     function drawGame() {
         const gridSize = currentDifficulty.gridSize;
-        
         
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-     
+      
         ctx.fillStyle = '#1d1d1f';
         snake.forEach((segment, index) => {
-            if (index === 0) {
-                 
-                ctx.fillStyle = '#333';
-            } else {
-                ctx.fillStyle = '#1d1d1f';
-            }
+            ctx.fillStyle = index === 0 ? '#333' : '#1d1d1f';
             ctx.fillRect(
                 segment.x * gridSize + 1,
                 segment.y * gridSize + 1,
@@ -882,7 +920,6 @@
         
         if (food) {
             if (isGoldFood) {
-             
                 ctx.fillStyle = '#ffb300';
                 ctx.beginPath();
                 ctx.arc(
@@ -899,7 +936,6 @@
                 ctx.textBaseline = 'middle';
                 ctx.fillText('$', food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2);
             } else {
-               
                 ctx.fillStyle = '#2e7d32';
                 ctx.beginPath();
                 ctx.arc(
@@ -912,50 +948,71 @@
                 ctx.fill();
             }
         }
+ 
+        if (isPlaying && !isUnlocked) {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.font = 'bold 24px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(`Need ${currentDifficulty.minFood - eatenFoodCount} more food to unlock Cash Out`, 
+                canvas.width / 2, canvas.height - 20);
+        }
     }
 
+    
     function gameStep() {
         if (!isPlaying || isCountingDown) return;
 
-        
         direction = { ...nextDirection };
 
-         
         const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
         const gridSize = currentDifficulty.gridSize;
         const maxX = Math.floor(canvas.width / gridSize);
         const maxY = Math.floor(canvas.height / gridSize);
 
-       
+         
         if (head.x < 0 || head.x >= maxX || head.y < 0 || head.y >= maxY) {
             gameOver(false);
             return;
         }
-
-        
         if (snake.some(seg => seg.x === head.x && seg.y === head.y)) {
             gameOver(false);
             return;
         }
 
-         
         snake.unshift(head);
 
         
         if (food && head.x === food.x && head.y === food.y) {
-            if (isGoldFood) {
-                currentMultiplier += currentDifficulty.goldMultiplier;
-                soundEatGold();
-                addLog(`Ate Gold Cash! Multiplier +${currentDifficulty.goldMultiplier} → ${roundNumber(currentMultiplier, 1)}x`);
-            } else {
-                currentMultiplier += currentDifficulty.normalMultiplier;
-                soundEat();
+            eatenFoodCount++;
+            
+           
+            if (!isUnlocked && eatenFoodCount >= currentDifficulty.minFood) {
+                isUnlocked = true;
+                soundUnlock();
+                addLog(`<span style='color:#2e7d32; font-weight:700;'>UNLOCKED! You can now Cash Out and earn multipliers!</span>`);
             }
-            currentMultiplier = roundNumber(currentMultiplier, 1);
+
+            
+            if (isUnlocked) {
+                if (isGoldFood) {
+                    currentMultiplier += currentDifficulty.goldMultiplier;
+                    soundEatGold();
+                    addLog(`Ate Gold Cash! Multiplier +${currentDifficulty.goldMultiplier} → ${roundNumber(currentMultiplier, 1)}x`);
+                } else {
+                    currentMultiplier += currentDifficulty.normalMultiplier;
+                    soundEat();
+                    addLog(`Ate food! Multiplier +${currentDifficulty.normalMultiplier} → ${roundNumber(currentMultiplier, 1)}x`);
+                }
+                currentMultiplier = roundNumber(currentMultiplier, 1);
+            } else {
+                soundEat();
+                addLog(`Ate food! Progress: ${eatenFoodCount}/${currentDifficulty.minFood} (Need ${currentDifficulty.minFood - eatenFoodCount} more)`);
+            }
+            
             spawnFood();
             updateUI();
         } else {
-            
             snake.pop();
         }
 
@@ -963,21 +1020,27 @@
         updateUI();
     }
 
+    
     function gameOver(isWin) {
         isPlaying = false;
         clearInterval(gameLoop);
         
         if (!isWin) {
             soundDie();
-            addLog(`<span style='color:#d32f2f; font-weight:700;'>GAME OVER! Hit wall/self. Lost HK$${roundNumber(currentBet, 2).toFixed(2)}</span>`);
+            const logMsg = isUnlocked 
+                ? `<span style='color:#d32f2f; font-weight:700;'>GAME OVER! Hit wall/self. Lost HK$${roundNumber(currentBet, 2).toFixed(2)}</span>`
+                : `<span style='color:#d32f2f; font-weight:700;'>GAME OVER! Hit wall/self. Lost HK$${roundNumber(currentBet, 2).toFixed(2)} (never unlocked)</span>`;
+            addLog(logMsg);
             showAlert("GAME OVER!", "You hit the wall or yourself!\nYou lost your entire stake.");
         }
         
         endGame(isWin);
     }
 
+    
     function cashout() {
-        if (!isPlaying || isCountingDown || isModalOpen()) return;
+        if (!isPlaying || isCountingDown || isModalOpen() || !isUnlocked) return;
+        
         isPlaying = false;
         clearInterval(gameLoop);
         
@@ -1005,6 +1068,47 @@
     }
 
    
+    window.addEventListener('keydown', (e) => {
+        
+        if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+            if (isPlaying && !isCountingDown && !isModalOpen() && isUnlocked) {
+                e.preventDefault();
+                cashout();
+                return;
+            }
+        }
+
+        
+        if (!isPlaying || isCountingDown || isModalOpen()) return;
+
+        let preventDefault = true;
+        switch (e.key.toLowerCase()) {
+            case 'arrowup':
+            case 'w':
+                if (direction.y !== 1) nextDirection = { x: 0, y: -1 };
+                break;
+            case 'arrowdown':
+            case 's':
+                if (direction.y !== -1) nextDirection = { x: 0, y: 1 };
+                break;
+            case 'arrowleft':
+            case 'a':
+                if (direction.x !== 1) nextDirection = { x: -1, y: 0 };
+                break;
+            case 'arrowright':
+            case 'd':
+                if (direction.x !== -1) nextDirection = { x: 1, y: 0 };
+                break;
+            default:
+                preventDefault = false;
+                break;
+        }
+
+         
+        if (preventDefault) e.preventDefault();
+    });
+
+     
     startBtn.onclick = () => {
         const bet = safeParseNumber(betInput.value, 0);
         if (bet > balance || bet <= 0) {
@@ -1014,31 +1118,36 @@
             return;
         }
 
-      
+     
+        startBtn.blur();
+
+        const selectedDifficulty = document.querySelector('input[name="difficulty"]:checked').value;
+        currentDifficulty = difficultyConfig[selectedDifficulty];
+        updateRequiredFoodDisplay();
+
         currentBet = bet;
         balance -= bet;
         balance = roundNumber(balance, 2);
         isPlaying = true;
         totalGames++;
+        eatenFoodCount = 0;
+        isUnlocked = false;
 
         saveToStorage();
         resetSnake();
         updateUI();
  
         startBtn.disabled = true;
-        cashoutBtn.disabled = false;
+        cashoutBtn.disabled = true;
         resetBtn.disabled = false;
         betInput.disabled = true;
         difficultyRadios.forEach(radio => radio.disabled = true);
 
-         
         startCountdown();
-
-        addLog(`<span style='font-weight:700;'>GAME STARTED</span> | Difficulty: ${currentDifficulty.name} | Stake: HK$${bet.toFixed(2)}`);
+        addLog(`<span style='font-weight:700;'>GAME STARTED</span> | Difficulty: ${currentDifficulty.name} | Stake: HK$${bet.toFixed(2)} | Need ${currentDifficulty.minFood} food to unlock`);
         soundStart();
     };
 
- 
     cashoutBtn.onclick = cashout;
  
     resetBtn.onclick = () => {
@@ -1047,6 +1156,8 @@
         clearInterval(gameLoop);
         currentBet = 0;
         currentMultiplier = 1;
+        eatenFoodCount = 0;
+        isUnlocked = false;
 
         resetSnake();
         drawGame();
@@ -1061,58 +1172,17 @@
         addLog(`<span style='font-weight:700;'>GAME RESET</span>`);
     };
 
-    
-    document.addEventListener('keydown', (e) => {
-        
-        if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
-            if (isPlaying && !isCountingDown && !isModalOpen()) {
-                e.preventDefault();
-                cashout();
-                return;
-            }
-        }
-
-        
-        if (!isPlaying || isCountingDown) return;
-
-        switch (e.key) {
-            case 'ArrowUp':
-            case 'w':
-            case 'W':
-                if (direction.y !== 1) nextDirection = { x: 0, y: -1 };
-                e.preventDefault();
-                break;
-            case 'ArrowDown':
-            case 's':
-            case 'S':
-                if (direction.y !== -1) nextDirection = { x: 0, y: 1 };
-                e.preventDefault();
-                break;
-            case 'ArrowLeft':
-            case 'a':
-            case 'A':
-                if (direction.x !== 1) nextDirection = { x: -1, y: 0 };
-                e.preventDefault();
-                break;
-            case 'ArrowRight':
-            case 'd':
-            case 'D':
-                if (direction.x !== -1) nextDirection = { x: 1, y: 0 };
-                e.preventDefault();
-                break;
-        }
-    });
-
-  
+   
     difficultyRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
             currentDifficulty = difficultyConfig[e.target.value];
+            updateRequiredFoodDisplay();
             soundSwitch();
-            addLog(`Difficulty switched to: <span style="font-weight:700">${currentDifficulty.name}</span>`);
+            addLog(`Difficulty switched to: <span style="font-weight:700">${currentDifficulty.name}</span> (Need ${currentDifficulty.minFood} food to unlock)`);
         });
     });
 
- 
+     
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
         setTimeout(() => {
