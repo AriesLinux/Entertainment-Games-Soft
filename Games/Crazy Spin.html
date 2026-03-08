@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crazy Spin | EGS Research</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        :root {
+            --primary: #2e7d32;
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
+            --loss: #d32f2f;
+            --win: #2e7d32;
+            --mask: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--mask);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background: var(--card);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 380px;
+            border: 1px solid var(--border);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 12px 0;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .modal-desc {
+            font-size: 0.95rem;
+            color: #666;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+
+        .modal-input {
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: var(--text);
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm {
+            background: var(--text);
+            color: #fff;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn-confirm:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 1s ease;
+        }
+
+        #splash-screen img {
+            width: 450px;
+            height: auto;
+            margin-bottom: 30px;
+            opacity: 0;
+            animation: fadeIn 1.5s forwards ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 3px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 0%;
+            height: 100%;
+            background: #000;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 30px;
+            border: 1px solid var(--border);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 280px;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        h2 { 
+            margin: 0; 
+            color: var(--text); 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            letter-spacing: -1.5px;
+            text-transform: uppercase;
+        }
+        
+        .stat-box {
+            background: #f9f9fb;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .add-balance-btn {
+            background: var(--text);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+            z-index: 10;
+        }
+        .add-balance-btn:hover { background: #333; transform: translateY(-1px); }
+        .add-balance-btn:active { transform: translateY(0); }
+
+        input {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        button {
+            background: var(--text);
+            color: #ffffff;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        button:hover { background: #333; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        button:disabled { background: #aaa; cursor: not-allowed; transform: none; }
+
+        .slots-container {
+            display: flex;
+            gap: 15px;
+            background: #f9f9fb;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid #eee;
+        }
+
+        .slot {
+            width: 80px;
+            height: 100px;
+            background: #fff;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            transition: transform 0.1s;
+        }
+
+        .slot.spinning {
+            animation: spinShake 0.1s infinite;
+        }
+
+        @keyframes spinShake {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .slot.win {
+            border-color: var(--win);
+            background: #e8f5e9;
+            animation: winPulse 0.5s ease-in-out;
+        }
+
+        @keyframes winPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .log {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.8rem;
+            height: 180px;
+            overflow-y: auto;
+            background: #f9f9fb;
+            padding: 12px;
+            border-radius: 8px;
+            color: #444;
+            border: 1px solid #eee;
+            line-height: 1.5;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .paytable {
+            background: #f9f9fb;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            font-size: 0.75rem;
+        }
+
+        .paytable-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .paytable-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="modal-mask" id="passwordModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Admin Verification</h3>
+            <p class="modal-desc">Enter admin password to add balance</p>
+            <input type="password" class="modal-input" id="passwordInput" placeholder="Enter password" maxlength="6">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="passwordCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="passwordConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-mask" id="amountModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Add Balance</h3>
+            <p class="modal-desc">Enter the amount to add to your balance</p>
+            <input type="number" class="modal-input" id="amountInput" placeholder="Enter amount (HK$)" min="1" step="1">
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="amountCancelBtn">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="amountConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-mask" id="alertModal">
+        <div class="modal-card">
+            <h3 class="modal-title" id="alertTitle">Notice</h3>
+            <p class="modal-desc" id="alertContent"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-confirm" id="alertConfirmBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="splash-screen">
+        <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="EGS Logo">
+        <div class="loading-bar">
+            <div class="loading-progress" id="load-progress"></div>
+        </div>
+    </div>
+
+    <div class="header">
+        <h2>Crazy Spin</h2>
+        <div style="color: #888; font-size: 0.85rem; margin-top: 5px; font-weight: 500;">ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
+    </div>
+
+    <div class="container">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="slots-container">
+                <div class="slot" id="slot0">💎</div>
+                <div class="slot" id="slot1">💰</div>
+                <div class="slot" id="slot2">💵</div>
+                <div class="slot" id="slot3">👑</div>
+            </div>
+            
+            <div class="paytable">
+                <div class="paytable-title">PAYTABLE</div>
+                <div class="paytable-row"><span>4x 👑 / 💎</span><span style="font-weight:700;">50x</span></div>
+                <div class="paytable-row"><span>4x 💰 / 💵 / ✨</span><span style="font-weight:700;">25x</span></div>
+                <div class="paytable-row"><span>4x 🎁 / 6️⃣</span><span style="font-weight:700;">10x</span></div>
+                <div class="paytable-row"><span>3x 👑 / 💎</span><span style="font-weight:700;">8x</span></div>
+                <div class="paytable-row"><span>3x 💰 / 💵 / ✨</span><span style="font-weight:700;">4x</span></div>
+                <div class="paytable-row"><span>Any ❌</span><span style="font-weight:700; color:#d32f2f;">0x</span></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="stat-box">
+                <div>
+                    <div style="font-size: 0.75rem; color: #888; font-weight: 600; margin-bottom: 5px;">CURRENT BALANCE</div>
+                    <div id="balanceDisplay" style="font-size: 2rem; font-weight: 700; color: var(--text);">HK$0.00</div>
+                </div>
+                <button id="addBalanceBtn" class="add-balance-btn">+</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 0.8rem; color: #666; font-weight: 600;">BET AMOUNT</label>
+                <input type="number" id="betInput" value="20" min="1">
+            </div>
+
+            <button id="spinButton">SPIN</button>
+
+            <div class="log" id="gameLog">
+                [SYSTEM]: RNG Engine Ready.<br>
+                [SYSTEM]: Paytable Matrix Loaded.<br>
+                [SYSTEM]: Local Storage Enabled.<br>
+            </div>
+            
+            <div id="statsDisplay" style="font-size: 0.75rem; color: #aaa; text-align: center; letter-spacing: 1px;">SPINS PLAYED: 0</div>
+        </div>
+    </div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(freq, type, duration, vol = 0.1) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    const soundTick = () => playSound(800, 'sine', 0.05, 0.05);
+    const soundWin = () => {
+        playSound(523.25, 'sine', 0.2, 0.08);
+        setTimeout(() => playSound(659.25, 'sine', 0.2, 0.08), 100);
+        setTimeout(() => playSound(783.99, 'sine', 0.3, 0.08), 200);
+    };
+    const soundLoss = () => playSound(200, 'sawtooth', 0.3, 0.06);
+    const soundBankrupt = () => {
+        playSound(200, 'sawtooth', 0.5, 0.1);
+        setTimeout(() => playSound(100, 'sawtooth', 0.8, 0.1), 300);
+    };
+    const soundSuccess = () => playSound(800, 'sine', 0.15, 0.08);
+    const soundError = () => playSound(200, 'square', 0.2, 0.05);
+
+    const SYMBOLS = ['💎', '💰', '💵', '👑', '✨', '🎁', '❌', '6️⃣'];
+    
+    const PAYTABLE = {
+        '👑': { 4: 50, 3: 8 },
+        '💎': { 4: 50, 3: 8 },
+        '💰': { 4: 25, 3: 4 },
+        '💵': { 4: 25, 3: 4 },
+        '✨': { 4: 25, 3: 4 },
+        '🎁': { 4: 10, 3: 0 },
+        '6️⃣': { 4: 10, 3: 0 },
+        '❌': { 4: 0, 3: 0 }
+    };
+
+   
+    const STORAGE_KEY_BALANCE = 'egs_game_balance';
+    const STORAGE_KEY_SAMPLES = 'pinball_moment_samples';
+    const ADMIN_PASSWORD = '198297';
+
+    let balance = 0;
+    let totalSpins = 0;
+    let isBankrupt = false;
+    let isSpinning = false;
+
+    const log = document.getElementById('gameLog');
+    const splash = document.getElementById('splash-screen');
+    const progress = document.getElementById('load-progress');
+    const spinButton = document.getElementById('spinButton');
+    const betInput = document.getElementById('betInput');
+    const addBalanceBtn = document.getElementById('addBalanceBtn');
+
+    function loadFromStorage() {
+        const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
+        const savedSamples = localStorage.getItem(STORAGE_KEY_SAMPLES);
+        balance = savedBalance ? parseFloat(savedBalance) : 0;
+      
+        totalSpins = savedSamples ? parseInt(savedSamples) : 0;
+    }
+
+    function saveToStorage() {
+        localStorage.setItem(STORAGE_KEY_BALANCE, balance.toFixed(2));
+        localStorage.setItem(STORAGE_KEY_SAMPLES, totalSpins.toString());
+    }
+
+    const passwordModal = document.getElementById('passwordModal');
+    const amountModal = document.getElementById('amountModal');
+    const alertModal = document.getElementById('alertModal');
+    const passwordInput = document.getElementById('passwordInput');
+    const amountInput = document.getElementById('amountInput');
+    const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+    const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+    const amountCancelBtn = document.getElementById('amountCancelBtn');
+    const amountConfirmBtn = document.getElementById('amountConfirmBtn');
+    const alertConfirmBtn = document.getElementById('alertConfirmBtn');
+    const alertTitle = document.getElementById('alertTitle');
+    const alertContent = document.getElementById('alertContent');
+
+    function openModal(modal) {
+        modal.style.display = 'flex';
+        const input = modal.querySelector('input');
+        if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeModal(modal) {
+        modal.style.display = 'none';
+        const input = modal.querySelector('input');
+        if (input) input.value = '';
+    }
+
+    function showAlert(title, content) {
+        alertTitle.innerText = title;
+        alertContent.innerText = content;
+        openModal(alertModal);
+    }
+
+    passwordConfirmBtn.onclick = () => {
+        const inputPwd = passwordInput.value.trim();
+        if (inputPwd !== ADMIN_PASSWORD) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Incorrect admin password.</span>");
+            closeModal(passwordModal);
+            showAlert("Access Denied", "Incorrect admin password!");
+            return;
+        }
+        soundSuccess();
+        closeModal(passwordModal);
+        openModal(amountModal);
+    };
+
+    amountConfirmBtn.onclick = () => {
+        const inputAmount = parseFloat(amountInput.value.trim());
+        if (isNaN(inputAmount) || inputAmount <= 0) {
+            soundError();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>ERR: Invalid amount entered.</span>");
+            showAlert("Invalid Input", "Please enter a valid positive number!");
+            return;
+        }
+        balance += inputAmount;
+        if (isBankrupt) {
+            isBankrupt = false;
+            spinButton.disabled = false;
+            betInput.disabled = false;
+        }
+        saveToStorage();
+        updateUI();
+        soundSuccess();
+        addLog(`<span style='color:#2e7d32; font-weight:700;'>SUCCESS: Added HK$${inputAmount.toLocaleString(undefined, {minimumFractionDigits: 2})} to balance.</span>`);
+        closeModal(amountModal);
+    };
+
+    passwordCancelBtn.onclick = () => closeModal(passwordModal);
+    amountCancelBtn.onclick = () => closeModal(amountModal);
+    alertConfirmBtn.onclick = () => closeModal(alertModal);
+    
+    [passwordInput, amountInput].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') e.target.closest('.modal-card').querySelector('.modal-btn-confirm').click();
+        });
+    });
+    
+    [passwordModal, amountModal, alertModal].forEach(modal => {
+        modal.addEventListener('click', (e) => e.target === modal && closeModal(modal));
+    });
+
+    addBalanceBtn.onclick = () => openModal(passwordModal);
+
+    window.onload = () => {
+        setTimeout(() => { progress.style.width = '100%'; }, 200);
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.visibility = 'hidden';
+                initGame();
+            }, 1000);
+        }, 2800);
+    };
+
+    function initGame() {
+        loadFromStorage();
+        updateUI();
+        addLog(`System initialized. Shared wallet connected.`);
+        checkBankrupt();
+    }
+
+    function updateUI() {
+        document.getElementById('balanceDisplay').innerText = `HK$${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        document.getElementById('statsDisplay').innerText = `SPINS PLAYED: ${totalSpins}`;
+    }
+
+    function addLog(msg) {
+        const entry = document.createElement('div');
+        entry.style.marginBottom = "5px";
+        entry.innerHTML = `<span style="color: #bbb;">#</span> ${msg}`;
+        log.prepend(entry);
+    }
+
+    function checkBankrupt() {
+        if (balance < 1 && !isBankrupt) {
+            isBankrupt = true;
+            spinButton.disabled = true;
+            betInput.disabled = true;
+            soundBankrupt();
+            addLog("<span style='color:#d32f2f; font-weight:700;'>BANKRUPT! You have lost all your funds.</span>");
+            showAlert("BANKRUPT!", "You have no remaining balance to continue playing.\nClick '+' to add balance.");
+        }
+    }
+
+    function getRandomSymbol() {
+        const weights = [10, 15, 15, 10, 15, 15, 15, 5];
+        const total = weights.reduce((a, b) => a + b, 0);
+        let random = Math.random() * total;
+        
+        for (let i = 0; i < SYMBOLS.length; i++) {
+            random -= weights[i];
+            if (random <= 0) return SYMBOLS[i];
+        }
+        return SYMBOLS[0];
+    }
+
+    function calculateWin(symbols, bet) {
+        const counts = {};
+        symbols.forEach(s => counts[s] = (counts[s] || 0) + 1);
+        
+        let maxMultiplier = 0;
+        let winSymbol = null;
+        
+        for (const [symbol, count] of Object.entries(counts)) {
+            if (count >= 3 && PAYTABLE[symbol] && PAYTABLE[symbol][count]) {
+                if (PAYTABLE[symbol][count] > maxMultiplier) {
+                    maxMultiplier = PAYTABLE[symbol][count];
+                    winSymbol = symbol;
+                }
+            }
+        }
+        
+        if (symbols.includes('❌')) {
+            return { multiplier: 0, symbol: '❌', count: counts['❌'] };
+        }
+        
+        return { multiplier: maxMultiplier, symbol: winSymbol, count: winSymbol ? counts[winSymbol] : 0 };
+    }
+
+    spinButton.onclick = async () => {
+        if (isBankrupt || isSpinning) return;
+        
+        const bet = parseFloat(betInput.value);
+        if (bet > balance || bet <= 0) {
+            addLog("<span style='color:#d32f2f'>ERR: Insufficient Funds.</span>");
+            return;
+        }
+        
+        isSpinning = true;
+        spinButton.disabled = true;
+        betInput.disabled = true;
+        
+        balance -= bet;
+        totalSpins++;
+        saveToStorage();
+        updateUI();
+        
+        const slots = [
+            document.getElementById('slot0'),
+            document.getElementById('slot1'),
+            document.getElementById('slot2'),
+            document.getElementById('slot3')
+        ];
+        
+        slots.forEach(s => {
+            s.classList.add('spinning');
+            s.classList.remove('win');
+        });
+        
+        const finalSymbols = [];
+        for (let i = 0; i < 4; i++) {
+            finalSymbols.push(getRandomSymbol());
+        }
+        
+        for (let i = 0; i < 4; i++) {
+            const spins = 15 + i * 5;
+            for (let j = 0; j < spins; j++) {
+                slots[i].textContent = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+                soundTick();
+                await new Promise(r => setTimeout(r, 50 + j * 2));
+            }
+            slots[i].textContent = finalSymbols[i];
+            slots[i].classList.remove('spinning');
+            soundTick();
+            await new Promise(r => setTimeout(r, 200));
+        }
+        
+        const winResult = calculateWin(finalSymbols, bet);
+        const winAmount = bet * winResult.multiplier;
+        
+        if (winResult.multiplier > 0) {
+            balance += winAmount;
+            soundWin();
+            
+            slots.forEach((s, idx) => {
+                if (finalSymbols[idx] === winResult.symbol) {
+                    s.classList.add('win');
+                }
+            });
+            
+            addLog(`WIN: ${winResult.count}x ${winResult.symbol} | <span style="color:#2e7d32; font-weight:700;">HK$${winAmount.toFixed(2)}</span>`);
+        } else {
+            soundLoss();
+            addLog(`LOSS: Better luck next time | <span style="color:#d32f2f; font-weight:700;">HK$0.00</span>`);
+        }
+        
+        saveToStorage();
+        updateUI();
+        
+        isSpinning = false;
+        spinButton.disabled = false;
+        betInput.disabled = false;
+        
+        checkBankrupt();
+    };
+</script>
+</body>
+</html>
