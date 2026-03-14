@@ -22,7 +22,7 @@
             --mask: rgba(0, 0, 0, 0.6);
         }
 
-     
+         
         .modal-mask {
             position: fixed;
             top: 0;
@@ -120,7 +120,7 @@
             transform: none;
         }
 
-       
+    
         #splash-screen {
             position: fixed;
             top: 0;
@@ -164,7 +164,7 @@
             transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-         
+   
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
@@ -188,7 +188,7 @@
             width: 100%;
         }
 
-      
+    
         .game-canvas-wrapper {
             flex: 1;
             min-width: 500px;
@@ -207,7 +207,7 @@
             border: 1px solid #eee;
         }
 
- 
+  
         .controls {
             display: flex;
             flex-direction: column;
@@ -236,7 +236,7 @@
             align-items: center;
         }
 
-     
+       
         .add-balance-btn {
             background: var(--text);
             color: #fff;
@@ -266,8 +266,7 @@
             font-size: 1rem;
             width: 100%;
         }
-
-         
+ 
         .difficulty-selector {
             display: flex;
             flex-direction: column;
@@ -313,7 +312,7 @@
             transform: translateY(-1px);
         }
 
-         
+    
         .game-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -388,7 +387,7 @@
             line-height: 1.4;
         }
 
- 
+     
         .control-hint {
             font-size: 0.65rem;
             color: #888;
@@ -396,7 +395,7 @@
             margin-top: -10px;
         }
 
-       
+         
         .food-counter {
             background: #f9f9fb;
             padding: 10px 12px;
@@ -413,7 +412,7 @@
 </head>
 <body>
 
- 
+  
     <div class="modal-mask" id="passwordModal">
         <div class="modal-card">
             <h3 class="modal-title">Admin Verification</h3>
@@ -426,7 +425,7 @@
         </div>
     </div>
 
- 
+    
     <div class="modal-mask" id="amountModal">
         <div class="modal-card">
             <h3 class="modal-title">Add Balance</h3>
@@ -439,7 +438,7 @@
         </div>
     </div>
 
-    
+   
     <div class="modal-mask" id="alertModal">
         <div class="modal-card">
             <h3 class="modal-title" id="alertTitle">Notice</h3>
@@ -450,7 +449,7 @@
         </div>
     </div>
 
-  
+   
     <div id="splash-screen">
         <img src="https://raw.githubusercontent.com/AriesLinux/Entertainment-Games-Soft/main/Entertainment%20Games%20Soft%20LOGO.png" alt="EGS Logo">
         <div class="loading-bar">
@@ -458,19 +457,18 @@
         </div>
     </div>
 
-    
+  
     <div class="header">
         <h2>Greedy Snake</h2>
         <div style="color: #888; font-size: 0.8rem; margin-top: 4px; font-weight: 500;">ENTERTAINMENT GAMES SOFT • RESEARCH SYSTEM</div>
     </div>
 
-  
+   
     <div class="container">
        
         <div class="game-canvas-wrapper">
             <canvas id="gameCanvas" width="480" height="480"></canvas>
         </div>
-
  
         <div class="controls">
             <div class="stat-box">
@@ -481,7 +479,7 @@
                 <button id="addBalanceBtn" class="add-balance-btn">+</button>
             </div>
 
-            
+       
             <div class="game-stats">
                 <div class="stat-item">
                     <div class="stat-label">Current Multiplier</div>
@@ -493,12 +491,12 @@
                 </div>
             </div>
 
-            
+       
             <div class="food-counter" id="foodCounter">
-                Eaten Food: <span id="eatenFoodCount">0</span> / <span id="requiredFoodCount">3</span> (Minimum for Cash Out)
+                Eaten Food: <span id="eatenFoodCount">0</span> / <span id="requiredFoodCount">10</span> (Minimum for Cash Out)
             </div>
 
-           
+            
             <div class="difficulty-selector">
                 <label class="difficulty-label">DIFFICULTY LEVEL</label>
                 <div class="difficulty-options">
@@ -506,53 +504,53 @@
                         <input type="radio" name="difficulty" id="easy" value="easy" checked>
                         <label for="easy">
                             <span>EASY</span>
-                            <span>SLOW (3 FOOD)</span>
+                            <span>SLOW (10 FOOD)</span>
                         </label>
                     </div>
                     <div class="difficulty-option">
                         <input type="radio" name="difficulty" id="medium" value="medium">
                         <label for="medium">
                             <span>MEDIUM</span>
-                            <span>MEDIUM (6 FOOD)</span>
+                            <span>MEDIUM (20 FOOD)</span>
                         </label>
                     </div>
                     <div class="difficulty-option">
                         <input type="radio" name="difficulty" id="hard" value="hard">
                         <label for="hard">
                             <span>HARD</span>
-                            <span>FAST (9 FOOD)</span>
+                            <span>FAST (30 FOOD)</span>
                         </label>
                     </div>
                 </div>
             </div>
 
-    
+          
             <div style="display: flex; flex-direction: column; gap: 6px;">
                 <label style="font-size: 0.75rem; color: #666; font-weight: 600;">STAKE AMOUNT</label>
                 <input type="number" id="betInput" value="50" min="1" step="1">
             </div>
 
-          
+        
             <button id="startBtn">Start Game</button>
             <button id="cashoutBtn" class="cashout" disabled>Cash Out (Enter)</button>
             <button id="resetBtn" disabled>Reset Game</button>
 
-        
+          
             <div class="control-hint">Use ARROW KEYS / WASD to control | Press ENTER to Cash Out</div>
 
-            
+          
             <div class="rule-desc">
                 <strong>Rules:</strong><br>
-                • Easy: Eat 3 food to unlock Cash Out & multiplier<br>
-                • Medium: Eat 6 food to unlock Cash Out & multiplier<br>
-                • Hard: Eat 9 food to unlock Cash Out & multiplier<br>
+                • Easy: Eat 10 food to unlock Cash Out & multiplier<br>
+                • Medium: Eat 20 food to unlock Cash Out & multiplier<br>
+                • Hard: Eat 30 food to unlock Cash Out & multiplier<br>
                 • Eat green food: +small multiplier<br>
                 • Eat gold cash food: +big multiplier<br>
                 • Hit wall/self: lose all stake<br>
                 • Cash out anytime to lock winnings
             </div>
 
-            
+        
             <div class="log" id="gameLog">
                 [SYSTEM]: Snake Engine Ready.<br>
                 [SYSTEM]: Local Storage Enabled.<br>
@@ -561,7 +559,7 @@
     </div>
 
 <script>
-     
+   
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playSound(freq, type, duration, vol = 0.1) {
@@ -578,7 +576,7 @@
         osc.stop(audioCtx.currentTime + duration);
     }
 
-  
+    
     const soundEat = () => playSound(600, 'sine', 0.1, 0.05);
     const soundEatGold = () => {
         playSound(800, 'triangle', 0.1, 0.08);
@@ -612,7 +610,7 @@
             normalMultiplier: 0.2,
             goldMultiplier: 1,
             gridSize: 20,
-            minFood: 3
+            minFood: 10
         },
         medium: {
             name: "MEDIUM",
@@ -620,7 +618,7 @@
             normalMultiplier: 0.5,
             goldMultiplier: 2,
             gridSize: 20,
-            minFood: 6
+            minFood: 20
         },
         hard: {
             name: "HARD",
@@ -628,7 +626,7 @@
             normalMultiplier: 1,
             goldMultiplier: 5,
             gridSize: 20,
-            minFood: 9
+            minFood: 30
         }
     };
 
@@ -636,7 +634,8 @@
     const STORAGE_KEY_BALANCE = 'egs_game_balance';
     const STORAGE_KEY_GAMES = 'greedy_snake_total_games';
     const ADMIN_PASSWORD = '198297';
- 
+
+    
     let balance = 0;
     let totalGames = 0;
     let isPlaying = false;
@@ -654,7 +653,7 @@
     let eatenFoodCount = 0;
     let isUnlocked = false;
 
- 
+   
     const eatenFoodCountDisplay = document.getElementById('eatenFoodCount');
     const requiredFoodCountDisplay = document.getElementById('requiredFoodCount');
     const balanceDisplay = document.getElementById('balanceDisplay');
@@ -683,6 +682,7 @@
     const alertTitle = document.getElementById('alertTitle');
     const alertContent = document.getElementById('alertContent');
 
+   
     function openModal(modal) {
         modal.style.display = 'flex';
         const input = modal.querySelector('input');
@@ -705,7 +705,7 @@
         return Array.from(allModals).some(modal => modal.style.display === 'flex');
     }
 
-    
+ 
     passwordConfirmBtn.onclick = () => {
         const inputPwd = passwordInput.value.trim();
         if (inputPwd !== ADMIN_PASSWORD) {
@@ -750,7 +750,7 @@
     });
     addBalanceBtn.onclick = () => openModal(passwordModal);
 
-  
+     
     function roundNumber(num, decimal) {
         return Math.round(num * Math.pow(10, decimal)) / Math.pow(10, decimal);
     }
@@ -759,8 +759,7 @@
         const num = parseFloat(str);
         return (isNaN(num) || !isFinite(num)) ? defaultValue : num;
     }
-
-   
+ 
     function loadFromStorage() {
         const savedBalance = localStorage.getItem(STORAGE_KEY_BALANCE);
         const savedGames = localStorage.getItem(STORAGE_KEY_GAMES);
@@ -799,7 +798,7 @@
         gameLog.scrollTop = 0;
     }
 
-     
+  
     function initGame() {
         canvas = document.getElementById('gameCanvas');
         ctx = canvas.getContext('2d');
@@ -822,7 +821,7 @@
         ctx.fillText('Press START to play', canvas.width / 2, canvas.height / 2);
     }
 
-  
+ 
     async function startCountdown() {
         isCountingDown = true;
         let count = 3;
@@ -860,7 +859,8 @@
             ctx.fillText('Get Ready!', canvas.width / 2, canvas.height / 2 + 60);
         }
     }
- 
+
+  
     function resetSnake() {
         const gridSize = currentDifficulty.gridSize;
         const startX = Math.floor(canvas.width / gridSize / 2);
@@ -878,7 +878,7 @@
         spawnFood();
     }
 
-    
+   
     function spawnFood() {
         const gridSize = currentDifficulty.gridSize;
         const maxX = Math.floor(canvas.width / gridSize);
@@ -898,14 +898,14 @@
         isGoldFood = Math.random() < 0.15;
     }
 
-     
+    
     function drawGame() {
         const gridSize = currentDifficulty.gridSize;
         
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      
+     
         ctx.fillStyle = '#1d1d1f';
         snake.forEach((segment, index) => {
             ctx.fillStyle = index === 0 ? '#333' : '#1d1d1f';
@@ -917,7 +917,7 @@
             );
         });
 
-        
+       
         if (food) {
             if (isGoldFood) {
                 ctx.fillStyle = '#ffb300';
@@ -948,7 +948,8 @@
                 ctx.fill();
             }
         }
- 
+
+         
         if (isPlaying && !isUnlocked) {
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
             ctx.font = 'bold 24px -apple-system, sans-serif';
@@ -959,7 +960,7 @@
         }
     }
 
-    
+     
     function gameStep() {
         if (!isPlaying || isCountingDown) return;
 
@@ -970,7 +971,7 @@
         const maxX = Math.floor(canvas.width / gridSize);
         const maxY = Math.floor(canvas.height / gridSize);
 
-         
+        
         if (head.x < 0 || head.x >= maxX || head.y < 0 || head.y >= maxY) {
             gameOver(false);
             return;
@@ -982,7 +983,7 @@
 
         snake.unshift(head);
 
-        
+   
         if (food && head.x === food.x && head.y === food.y) {
             eatenFoodCount++;
             
@@ -1020,7 +1021,7 @@
         updateUI();
     }
 
-    
+ 
     function gameOver(isWin) {
         isPlaying = false;
         clearInterval(gameLoop);
@@ -1037,7 +1038,7 @@
         endGame(isWin);
     }
 
-    
+   
     function cashout() {
         if (!isPlaying || isCountingDown || isModalOpen() || !isUnlocked) return;
         
@@ -1067,9 +1068,9 @@
         difficultyRadios.forEach(radio => radio.disabled = false);
     }
 
-   
+  
     window.addEventListener('keydown', (e) => {
-        
+      
         if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
             if (isPlaying && !isCountingDown && !isModalOpen() && isUnlocked) {
                 e.preventDefault();
@@ -1078,7 +1079,7 @@
             }
         }
 
-        
+      
         if (!isPlaying || isCountingDown || isModalOpen()) return;
 
         let preventDefault = true;
@@ -1104,11 +1105,11 @@
                 break;
         }
 
-         
+       
         if (preventDefault) e.preventDefault();
     });
 
-     
+   
     startBtn.onclick = () => {
         const bet = safeParseNumber(betInput.value, 0);
         if (bet > balance || bet <= 0) {
@@ -1118,7 +1119,7 @@
             return;
         }
 
-     
+      
         startBtn.blur();
 
         const selectedDifficulty = document.querySelector('input[name="difficulty"]:checked').value;
@@ -1136,7 +1137,8 @@
         saveToStorage();
         resetSnake();
         updateUI();
- 
+
+       
         startBtn.disabled = true;
         cashoutBtn.disabled = true;
         resetBtn.disabled = false;
@@ -1149,7 +1151,8 @@
     };
 
     cashoutBtn.onclick = cashout;
- 
+
+    
     resetBtn.onclick = () => {
         isPlaying = false;
         isCountingDown = false;
@@ -1182,7 +1185,7 @@
         });
     });
 
-     
+    
     window.onload = () => {
         setTimeout(() => { progress.style.width = '100%'; }, 200);
         setTimeout(() => {
