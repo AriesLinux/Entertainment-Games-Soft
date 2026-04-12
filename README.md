@@ -1,6 +1,6 @@
 <div align="center">
 
-# Entertainment Games Soft (EGS)
+# Entertainment Games Soft
 ## Research-First Open Source Gambling Technology
 
 <br><br><br>
